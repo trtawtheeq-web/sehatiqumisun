@@ -1,0 +1,40 @@
+services:
+  - type: web
+    runtime: static
+    name: oredoo-frontend
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SOCKET_URL
+        fromService:
+          type: web
+          name: oredoo-server
+          property: host
+      - key: VITE_FRONTEND_FORGE_API_URL
+        value: https://forge.manus.im
+      - key: VITE_FRONTEND_FORGE_API_KEY
+        value: default-key
+
+  - type: web
+    runtime: node
+    name: oredoo-server
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: ./data
+      - key: CLIENT_URL
+        fromService:
+          type: web
+          name: oredoo-frontend
+          property: host
+      - key: ADMIN_PASSWORD
+        sync: false
