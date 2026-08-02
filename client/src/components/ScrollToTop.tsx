@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "wouter";
 
 /**
  * Resets window scroll to top on every route change so the visitor

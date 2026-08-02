@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "wouter";
 import { AlertTriangle, X } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
 

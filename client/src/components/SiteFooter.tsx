@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { useLang } from "@/i18n/LanguageContext";
 import qatarLogo from "@/assets/qatar-state-logo.png.asset.json";
 import hukoomiLogo from "@/assets/hukoomi-logo.svg.asset.json";

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "wouter";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import PrintDoc from "@/components/PrintDoc";

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "wouter";
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
