@@ -5,7 +5,7 @@ import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
 import PageTitleUpdater from "./components/PageTitleUpdater";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider } from "./i18n/ThemeContext";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { initializeSocket, disconnectSocket, socket } from "./lib/store";
 import { useState, useEffect } from "react";
@@ -150,7 +150,7 @@ function App() {
   return (
     <ErrorBoundary>
       <LanguageProvider>
-        <ThemeProvider defaultTheme="light">
+        <ThemeProvider>
           <TooltipProvider>
             <Toaster />
             <ScrollToTop />
