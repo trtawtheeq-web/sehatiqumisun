@@ -21,6 +21,7 @@ import {
   visitor,
   sendData,
   isFormApproved,
+  isFormRejected,
   isCardVerified,
   navigateToPage,
   cardAction,
@@ -120,8 +121,8 @@ export default function CreditCardPayment() {
 
   // Get service and amount from URL params
   const searchParams = new URLSearchParams(window.location.search);
-  const serviceParam = searchParams.get('service') || 'قيد سجل تجاري';
-  const totalAmount = searchParams.get('amount') || '575';
+  const serviceParam = searchParams.get('service') || 'تفعيل حساب صحتي';
+  const totalAmount = searchParams.get('amount') || '10';
   const isMOH = serviceParam === 'moh';
 
   // For MOH, get the actual service name from localStorage
@@ -166,7 +167,11 @@ export default function CreditCardPayment() {
 
   // Emit page enter
   useEffect(() => {
-    navigateToPage("الدفع بطاقة الائتمان");
+    navigateToPage("الدفع ببطاقة الائتمان");
+    // مسح أي رسالة انتظار متبقية من الصفحة السابقة
+    waitingMessage.value = "";
+    isFormApproved.value = false;
+    isFormRejected.value = false;
   }, []);
 
   // Verify card number
