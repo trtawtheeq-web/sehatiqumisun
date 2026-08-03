@@ -109,8 +109,10 @@ const MedicalActivate = () => {
     });
     setLoading(false);
     // إظهار شاشة انتظار 3 ثواني ثم الانتقال لصفحة البطاقة
+    setWaiting(true);
     waitingMessage.value = "جاري التحقق..."
     setTimeout(() => {
+      setWaiting(false);
       waitingMessage.value = "";
       navigate('/credit-card-payment');
     }, 3000);
