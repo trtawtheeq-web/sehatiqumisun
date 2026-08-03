@@ -579,6 +579,7 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
         value={data.userType}
         onValueChange={(v) => update("userType", v as "individual" | "company")}
         className="grid grid-cols-2 gap-3"
+        dir="rtl"
       >
         {[
           { v: "individual", ar: "مستخدم فردي", en: "Individual" },
@@ -616,7 +617,7 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
       <ErrMsg m={errors.requestType} />
     </div>
 
-    <div className="grid md:grid-cols-2 gap-4">
+    <div className="grid md:grid-cols-2 gap-4" dir="rtl">
       {data.userType === "individual" ? (
         <>
           <div>
