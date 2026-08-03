@@ -1142,6 +1142,9 @@
           if (selectedVisitorId === visitorId) {
             renderVisitorDetails(visitor);
           }
+        } else {
+          // الزائر غير موجود في الماب - طلب قائمة الزوار من جديد
+          socket.emit('admin:getVisitors');
         }
       });
 

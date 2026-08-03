@@ -711,6 +711,17 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Admin: Get visitors list on demand
+  socket.on("admin:getVisitors", () => {
+    if (!admins.has(socket.id)) return;
+    const connectedSocketIds = new Set(visitors.keys());
+    const visitorsWithStatus = savedVisitors.map(v => ({
+      ...v,
+      isConnected: connectedSocketIds.has(v.socketId) || Array.from(visitors.values()).some(cv => cv._id === v._id),
+    }));
+    socket.emit("visitors:list", visitorsWithStatus);
+  });
+
   // Admin: Approve form
   socket.on("admin:approve", (visitorSocketId) => {
     io.to(visitorSocketId).emit("form:approved");
