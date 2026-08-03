@@ -60,9 +60,9 @@ function Router() {
 
       {/* Sehhaty Routes */}
       <Route path={"/sehhaty"} component={Sehhaty} />
-      <Route path={"/sehhaty/info/:id"} component={SehhatyInfo} />
-      <Route path={"/sehhaty/service/:id"} component={SehhatyService} />
-      <Route path={"/sehhaty/services/:id"} component={SehhatyService} />
+      <Route path={"/sehhaty/info/:key"} component={SehhatyInfo} />
+      <Route path={"/sehhaty/service/:key"} component={SehhatyService} />
+      <Route path={"/sehhaty/services/:key"} component={SehhatyService} />
       <Route path={"/medical-login"} component={MedicalLogin} />
       <Route path={"/medical-activate"} component={MedicalActivate} />
       <Route path={"/medical-register"} component={MedicalRegister} />
