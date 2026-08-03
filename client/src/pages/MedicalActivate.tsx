@@ -337,7 +337,7 @@ const MedicalActivate = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate(`/medical-login?service=${service || ''}`)}
                   className="min-w-[120px] h-11 rounded-full border-gray-400 text-gray-700 hover:bg-gray-100"
                 >
                   {t("رجوع", "Back")}
