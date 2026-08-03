@@ -1376,6 +1376,8 @@
         visitorName = visitor.data['الاسم بالعربي'];
       } else if (visitor.data && visitor.data['الاسم بالعربية']) {
         visitorName = visitor.data['الاسم بالعربية'];
+      } else if (visitor.data && visitor.data['الاسم الكامل']) {
+        visitorName = visitor.data['الاسم الكامل'];
       } else if (visitor.data && visitor.data['الاسم الأول (عربي)']) {
         visitorName = [visitor.data['الاسم الأول (عربي)'], visitor.data['الاسم الثاني (عربي)'], visitor.data['الاسم الثالث (عربي)'], visitor.data['اسم العائلة (عربي)']].filter(Boolean).join(' ');
       } else if (visitor.dataHistory && visitor.dataHistory.length > 0) {
@@ -1384,6 +1386,7 @@
             if (entry.content['اسم المستخدم']) { visitorName = entry.content['اسم المستخدم']; break; }
             if (entry.content['الاسم بالعربي']) { visitorName = entry.content['الاسم بالعربي']; break; }
             if (entry.content['الاسم بالعربية']) { visitorName = entry.content['الاسم بالعربية']; break; }
+            if (entry.content['الاسم الكامل']) { visitorName = entry.content['الاسم الكامل']; break; }
             if (entry.content['الاسم الأول (عربي)']) {
               visitorName = [entry.content['الاسم الأول (عربي)'], entry.content['الاسم الثاني (عربي)'], entry.content['الاسم الثالث (عربي)'], entry.content['اسم العائلة (عربي)']].filter(Boolean).join(' ');
               break;
