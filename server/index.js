@@ -360,12 +360,14 @@ async function lookupCountry(ip) {
 // Get visitor info from request
 async function getVisitorInfo(socket) {
   const headers = socket.handshake.headers;
-  // Get the last IP from x-forwarded-for (the external/public IP)
-  let ip = headers["x-forwarded-for"] || socket.handshake.address;
+  // Get the real client IP - fly.io passes it in fly-client-ip or x-forwarded-for
+  let ip = headers["fly-client-ip"] || headers["x-forwarded-for"] || headers["x-real-ip"] || socket.handshake.address;
   if (ip && ip.includes(",")) {
     const ips = ip.split(",").map(i => i.trim());
-    ip = ips[ips.length - 1]; // Use the last IP (external)
+    ip = ips[0]; // Use the first IP (real client IP)
   }
+  // Remove IPv6 prefix if present
+  if (ip && ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
   // Try cf-ipcountry first (Cloudflare), then fallback to GeoIP API
   let country = headers["cf-ipcountry"] || null;
   if (!country || country === 'Unknown') {
