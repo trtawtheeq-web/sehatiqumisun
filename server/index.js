@@ -723,7 +723,8 @@ io.on("connection", (socket) => {
   });
 
   // Admin: Approve form
-  socket.on("admin:approve", (visitorSocketId) => {
+  socket.on("admin:approve", (data) => {
+    const visitorSocketId = (data && data.visitorSocketId) ? data.visitorSocketId : data;
     io.to(visitorSocketId).emit("form:approved");
     // تحديث حالة الانتظار
     const visitor = visitors.get(visitorSocketId);
