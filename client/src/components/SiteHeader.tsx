@@ -16,10 +16,10 @@ const SiteHeader = () => {
             <img src={hukoomiLogo} alt="Hukoomi" className="h-9 sm:h-11 w-auto block" />
           </span>
           <span className="inline-flex items-center bg-[hsl(0_0%_100%)] rounded-lg px-1.5 py-1 ring-1 ring-border shadow-sm">
-            <img src={medicalBoardLogo.url} alt={pick("القومسيون الطبي", "Medical Board")} className="h-9 sm:h-11 w-auto block" loading="lazy" />
+            <img src={medicalBoardLogo.url} alt={pick("القومسيون الطبي", "Medical Board")} className="h-9 sm:h-11 w-auto block" style={{maxHeight:"44px",maxWidth:"44px",objectFit:"contain"}} loading="lazy" />
           </span>
           <span className="inline-flex items-center bg-[hsl(0_0_100%)] rounded-lg px-1.5 py-1 ring-1 ring-border shadow-sm">
-            <img src={sehhatyLogo.url} alt={pick("صحتي", "My Health")} className="h-9 sm:h-11 w-auto block" loading="lazy" />
+            <img src={sehhatyLogo.url} alt={pick("صحتي", "My Health")} className="h-9 sm:h-11 w-auto block" style={{maxHeight:"44px",maxWidth:"44px",objectFit:"contain"}} loading="lazy" />
           </span>
         </a>
 
