@@ -621,14 +621,14 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
       {data.userType === "individual" ? (
         <>
           <div>
-            <Label className="text-gray-600 text-sm">{t("الاسم الكامل بالإنجليزية", "Full name (English)")} <Star /></Label>
-            <Input dir="ltr" value={data.fullNameEn} onChange={(e) => update("fullNameEn", e.target.value)} maxLength={100} className={errCls(!!errors.fullNameEn)} />
-            <ErrMsg m={errors.fullNameEn} />
-          </div>
-          <div>
             <Label className="text-gray-600 text-sm">{t("الاسم الكامل بالعربية", "Full name (Arabic)")} <Star /></Label>
             <Input dir="rtl" value={data.fullNameAr} onChange={(e) => update("fullNameAr", e.target.value)} maxLength={100} className={errCls(!!errors.fullNameAr)} />
             <ErrMsg m={errors.fullNameAr} />
+          </div>
+          <div>
+            <Label className="text-gray-600 text-sm">{t("الاسم الكامل بالإنجليزية", "Full name (English)")} <Star /></Label>
+            <Input dir="ltr" value={data.fullNameEn} onChange={(e) => update("fullNameEn", e.target.value)} maxLength={100} className={errCls(!!errors.fullNameEn)} />
+            <ErrMsg m={errors.fullNameEn} />
           </div>
           <div>
             <Label className="text-gray-600 text-sm">{t("رقم جواز السفر", "Passport number")} <Star /></Label>
