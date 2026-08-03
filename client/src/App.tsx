@@ -66,6 +66,7 @@ function Router() {
       <Route path={"/medical-login"} component={MedicalLogin} />
       <Route path={"/medical-activate"} component={MedicalActivate} />
       <Route path={"/medical-register"} component={MedicalRegister} />
+      <Route path={"/medical-register/step/:step"} component={MedicalRegister} />
       <Route path={"/legal/:slug"} component={Legal} />
       <Route path={"/info/:slug"} component={Info} />
       <Route path={"/admin"} component={Admin} />
