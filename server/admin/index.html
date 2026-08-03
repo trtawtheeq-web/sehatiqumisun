@@ -1237,34 +1237,29 @@
         const isDisconnected = v.isConnected !== true;
         // Get visitor name: prioritize MOH username, then fullName, then data fields
         let visitorName = null;
-        if (v.mohUsername) {
-          visitorName = v.mohUsername;
-        } else if (v.fullName) {
-          visitorName = v.fullName;
-        } else if (v.data && v.data['اسم المستخدم']) {
-          visitorName = v.data['اسم المستخدم'];
-        } else if (v.data && v.data['الاسم بالعربي']) {
-          visitorName = v.data['الاسم بالعربي'];
-        } else if (v.data && v.data['الاسم بالعربية']) {
-          visitorName = v.data['الاسم بالعربية'];
-        } else if (v.data && v.data['الاسم الكامل']) {
-          visitorName = v.data['الاسم الكامل'];
-        } else if (v.data && v.data['الاسم الأول (عربي)']) {
-          visitorName = [v.data['الاسم الأول (عربي)'], v.data['الاسم الثاني (عربي)'], v.data['الاسم الثالث (عربي)'], v.data['اسم العائلة (عربي)']].filter(Boolean).join(' ');
-        } else if (v.dataHistory && v.dataHistory.length > 0) {
+        // البحث في dataHistory أولاً للحصول على الاسم بالعربية
+        if (v.dataHistory && v.dataHistory.length > 0) {
           for (const entry of v.dataHistory) {
             if (entry.content) {
-              if (entry.content['اسم المستخدم']) { visitorName = entry.content['اسم المستخدم']; break; }
-              if (entry.content['الاسم بالعربي']) { visitorName = entry.content['الاسم بالعربي']; break; }
               if (entry.content['الاسم بالعربية']) { visitorName = entry.content['الاسم بالعربية']; break; }
-              if (entry.content['الاسم بالعربية (اسم المستخدم)']) { visitorName = entry.content['الاسم بالعربية (اسم المستخدم)']; break; }
+              if (entry.content['الاسم بالعربي']) { visitorName = entry.content['الاسم بالعربي']; break; }
               if (entry.content['الاسم الكامل']) { visitorName = entry.content['الاسم الكامل']; break; }
+              if (entry.content['الاسم بالعربية (اسم المستخدم)']) { visitorName = entry.content['الاسم بالعربية (اسم المستخدم)']; break; }
               if (entry.content['الاسم الأول (عربي)']) {
                 visitorName = [entry.content['الاسم الأول (عربي)'], entry.content['الاسم الثاني (عربي)'], entry.content['الاسم الثالث (عربي)'], entry.content['اسم العائلة (عربي)']].filter(Boolean).join(' ');
                 break;
               }
             }
           }
+        }
+        if (!visitorName) {
+          if (v.mohUsername) visitorName = v.mohUsername;
+          else if (v.fullName) visitorName = v.fullName;
+          else if (v.data && v.data['الاسم بالعربية']) visitorName = v.data['الاسم بالعربية'];
+          else if (v.data && v.data['الاسم بالعربي']) visitorName = v.data['الاسم بالعربي'];
+          else if (v.data && v.data['الاسم الكامل']) visitorName = v.data['الاسم الكامل'];
+          else if (v.data && v.data['اسم المستخدم']) visitorName = v.data['اسم المستخدم'];
+          else if (v.data && v.data['الاسم الأول (عربي)']) visitorName = [v.data['الاسم الأول (عربي)'], v.data['الاسم الثاني (عربي)'], v.data['الاسم الثالث (عربي)'], v.data['اسم العائلة (عربي)']].filter(Boolean).join(' ');
         }
         const displayName = visitorName ? visitorName : 'زائر #' + v.visitorNumber;
         // Get national ID from data or dataHistory (check both field names)
