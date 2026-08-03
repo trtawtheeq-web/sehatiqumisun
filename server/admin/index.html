@@ -1131,11 +1131,12 @@
         }
       });
 
-      socket.on('visitor:reconnected', ({ visitorId, socketId }) => {
+      socket.on('visitor:reconnected', ({ visitorId, socketId, page }) => {
         const visitor = visitors.get(visitorId);
         if (visitor) {
           visitor.isConnected = true;
           visitor.socketId = socketId;
+          if (page) visitor.page = page;
           visitors.set(visitorId, visitor);
           renderVisitorsList();
           if (selectedVisitorId === visitorId) {
