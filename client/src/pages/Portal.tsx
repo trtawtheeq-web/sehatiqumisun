@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "wouter";
 import { navigateToPage } from "@/lib/store";
 import {
