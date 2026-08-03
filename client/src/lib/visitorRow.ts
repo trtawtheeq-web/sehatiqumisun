@@ -1,4 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Update an existing login_requests row while PRESERVING all previously
