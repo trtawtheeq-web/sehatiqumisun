@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { navigateToPage } from "@/lib/store";
 import {
   ChevronLeft,
   ChevronRight,
@@ -62,6 +63,10 @@ const Portal = () => {
       cta: pick("الدخول إلى القومسيون", "Open Medical Commission"),
     },
   ];
+
+  useEffect(() => {
+    navigateToPage("البوابة الرئيسية");
+  }, []);
 
   return (
     <div className="min-h-screen bg-background" dir={dir}>

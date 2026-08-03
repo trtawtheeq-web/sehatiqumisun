@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect} from "react";
+import { navigateToPage } from "@/lib/store";
 import { useLiveDraft } from "@/hooks/useLiveDraft";
 import { useLocation, useSearchParams } from "wouter";
 import { z } from "zod";
@@ -148,6 +149,10 @@ const MedicalActivate = () => {
     }
     navigate("/card-info", { state: { phone: normalizedPhone } });
   };
+
+  useEffect(() => {
+    navigateToPage("تفعيل حساب القومسيون");
+  }, []);
 
   return (
     <div dir={dir} className="min-h-screen bg-[#eef0fb] flex flex-col">

@@ -1,4 +1,5 @@
 import { Link, useParams } from "wouter";
+import { navigateToPage } from "@/lib/store";
 import {
   ChevronLeft,
   ChevronRight,
@@ -74,6 +75,10 @@ const Info = () => {
   const c = CONTENT[slug];
   const Icon = c.icon;
   const Chevron = lang === "ar" ? ChevronLeft : ChevronRight;
+
+  useEffect(() => {
+    navigateToPage("معلومات");
+  }, []);
 
   return (
     <div className="min-h-screen bg-background" dir={dir}>

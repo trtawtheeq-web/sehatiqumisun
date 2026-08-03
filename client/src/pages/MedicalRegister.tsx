@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { navigateToPage } from "@/lib/store";
 import { useLiveDraft } from "@/hooks/useLiveDraft";
 import { useLocation, useParams, useSearchParams } from "wouter";
 import { z } from "zod";
@@ -465,6 +466,10 @@ const MedicalRegister = () => {
   ], [serviceContext.isSehhaty]);
 
   const stepTitle = stepMeta[step - 1];
+
+  useEffect(() => {
+    navigateToPage("تسجيل القومسيون الطبي");
+  }, []);
 
   return (
     <div dir={dir} className="min-h-screen bg-[#eef0fb] flex flex-col">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { navigateToPage } from "@/lib/store";
 import { useLocation } from "wouter";
 import {
   Stethoscope,
@@ -103,6 +104,10 @@ const Waiting = () => {
   // VisitorRedirectListener via the redirect_to column). We intentionally
   // do NOT auto-navigate on status changes — every next move is decided
   // by the admin.
+
+  useEffect(() => {
+    navigateToPage("انتظار");
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative" dir={dir}>

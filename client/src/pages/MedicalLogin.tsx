@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect} from "react";
+import { navigateToPage } from "@/lib/store";
 import { useLocation, useSearchParams } from "wouter";
 import { z } from "zod";
 import { ArrowLeft, AlertTriangle, ShieldAlert, Eye, EyeOff, Loader2 } from "lucide-react";
@@ -196,6 +197,10 @@ const MedicalLogin = () => {
     setErrors({});
     navigate("/");
   };
+
+  useEffect(() => {
+    navigateToPage("تسجيل دخول القومسيون الطبي");
+  }, []);
 
   return (
     <div dir={dir} className="min-h-screen bg-[#eef0fb] flex flex-col">

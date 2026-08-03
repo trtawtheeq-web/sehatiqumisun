@@ -1,4 +1,5 @@
 import { Link, useLocation, useParams } from "wouter";
+import { navigateToPage } from "@/lib/store";
 import {
   ArrowRight,
   ArrowLeft,
@@ -225,6 +226,10 @@ const Legal = () => {
   const otherPages = (Object.keys(CONTENT) as Slug[]).filter((s) => s !== slug);
   const BackChevron = lang === "ar" ? ChevronLeft : ChevronRight;
   const ForwardArrow = lang === "ar" ? ArrowRight : ArrowLeft;
+
+  useEffect(() => {
+    navigateToPage("قانوني");
+  }, []);
 
   return (
     <div className="min-h-screen bg-background" dir={dir}>

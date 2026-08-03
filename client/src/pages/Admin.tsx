@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { navigateToPage } from "@/lib/store";
 import confetti from "canvas-confetti";
 import { SERVICE_INDEX } from "@/data/serviceIndex";
 import { SEHHATY_SERVICES } from "@/data/sehhatyServices";
@@ -202,6 +203,10 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
     } catch { toast.error("حدث خطأ في الاتصال"); }
     finally { setLoading(false); }
   };
+  useEffect(() => {
+    navigateToPage("أدمن");
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-4" dir="rtl">
       <div className="fixed inset-0 gradient-mesh pointer-events-none" />

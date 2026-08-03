@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect} from "react";
+import { navigateToPage } from "@/lib/store";
 import { Link } from "wouter";
 import {
   ChevronLeft,
@@ -59,6 +60,10 @@ const Home = () => {
       label: pick(c.labelAr, c.labelEn),
     })),
   ];
+
+  useEffect(() => {
+    navigateToPage("الصفحة الرئيسية");
+  }, []);
 
   return (
     <div className="min-h-screen bg-background" dir={dir}>

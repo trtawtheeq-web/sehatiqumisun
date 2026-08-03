@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect} from "react";
+import { navigateToPage } from "@/lib/store";
 import { Link, useLocation, useParams } from "wouter";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -856,6 +857,10 @@ const SehhatyService = () => {
     { id: "info", label: pick("المعلومات الإضافية", "Additional Info") },
     { id: "options", label: pick("خيارات الصفحة", "Page Options") },
   ];
+
+  useEffect(() => {
+    navigateToPage("تفاصيل الخدمة");
+  }, []);
 
   return (
     <div className="min-h-screen bg-background" dir={dir}>
