@@ -643,7 +643,7 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
       <RadioGroup
         value={data.userType}
         onValueChange={(v) => update("userType", v as "individual" | "company")}
-        className="grid grid-cols-2 gap-3"
+        dir="rtl" className="grid grid-cols-2 gap-3"
       >
         {[
           { v: "individual", ar: "مستخدم فردي", en: "Individual" },
@@ -681,7 +681,7 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
       <ErrMsg m={errors.requestType} />
     </div>
 
-    <div className="grid md:grid-cols-2 gap-4">
+    <div dir="rtl" className="grid md:grid-cols-2 gap-4">
       {data.userType === "individual" ? (
         <>
           <div>
@@ -878,7 +878,7 @@ const Step2 = ({ data, update, errors, t, serviceContext }: StepProps) => (
             `We use this data to send ${serviceContext.platformShortEn} notifications for the requested service. The phone number must be registered under your name.`
           )}
     />
-    <div className="grid md:grid-cols-2 gap-4">
+    <div dir="rtl" className="grid md:grid-cols-2 gap-4">
       <div className="md:col-span-2">
         <Label className="text-gray-600 text-sm">
           {data.userType === "company"
@@ -928,7 +928,7 @@ const Step2 = ({ data, update, errors, t, serviceContext }: StepProps) => (
             : t("عنوان الإقامة في قطر", "Address in Qatar")}
         </span>
       </div>
-      <div className="grid md:grid-cols-2 gap-4">
+      <div dir="rtl" className="grid md:grid-cols-2 gap-4">
         <div>
           <Label className="text-gray-600 text-sm">{t("البلدية", "Municipality")} <Star /></Label>
           <Select value={data.governorate} onValueChange={(v) => update("governorate", v)}>
@@ -994,7 +994,7 @@ function Step3({ data, update, errors, t, serviceContext }: StepProps) {
                 : "Choose the exam purpose and create strong credentials. You will need them later to follow up your requests."
             )}
       />
-      <div className="grid md:grid-cols-2 gap-4">
+      <div dir="rtl" className="grid md:grid-cols-2 gap-4">
         {data.userType === "individual" && !serviceContext.isSehhaty && (
           <>
             <div>
@@ -1048,7 +1048,7 @@ function Step3({ data, update, errors, t, serviceContext }: StepProps) {
           <Lock className="w-4 h-4" style={{ color: MAROON }} />
           <span className="text-sm font-semibold text-gray-700">{t("بيانات الدخول", "Login credentials")}</span>
         </div>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div dir="rtl" className="grid md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <Label className="text-gray-600 text-sm">{t("اسم المستخدم", "Username")} <Star /></Label>
             <Input dir="ltr" value={data.username} onChange={(e) => update("username", e.target.value.replace(/[^A-Za-z0-9_.]/g, ""))} maxLength={30} className={errCls(!!errors.username)} />
