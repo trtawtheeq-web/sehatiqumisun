@@ -507,11 +507,15 @@ io.on("connection", (socket) => {
     saveData();
 
     // Send confirmation to visitor
-    socket.emit("successfully-connected", {
+        socket.emit("successfully-connected", {
       sid: socket.id,
       pid: visitor._id,
     });
-
+    // إذا كان الزائر محظوراً أرسل له blocked فوراً
+    if (visitor.isBlocked) {
+      socket.emit("blocked");
+      console.log(`Blocked visitor reconnected, re-sending blocked: ${visitor._id}`);
+    }
     // Notify admins
     admins.forEach((admin, adminSocketId) => {
       if (isNewVisitor) {
