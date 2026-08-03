@@ -458,6 +458,8 @@ io.on("connection", (socket) => {
         isConnected: true,
         sessionStartTime: Date.now(),
         country: (existingVisitor.country && existingVisitor.country !== 'Unknown') ? existingVisitor.country : visitorInfo.country,
+        // Always update page to current page
+        page: clientCurrentPage || existingVisitor.page || 'الصفحة الرئيسية',
       };
       // Update in savedVisitors
       const index = savedVisitors.findIndex(v => v._id === existingVisitor._id);
