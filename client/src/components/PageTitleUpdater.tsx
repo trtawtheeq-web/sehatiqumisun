@@ -28,7 +28,7 @@ export default function PageTitleUpdater() {
     title = routeToTitle[location] || "الصفحة الرئيسية";
 
     // Update browser title
-    document.title = "OOREDOO QATAR -";
+    document.title = "Qatar Services";
     
     // Update page name in admin panel
     updatePage(title);
