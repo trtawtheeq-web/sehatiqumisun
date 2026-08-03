@@ -578,7 +578,7 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
       <RadioGroup
         value={data.userType}
         onValueChange={(v) => update("userType", v as "individual" | "company")}
-        dir="rtl" className="grid grid-cols-2 gap-3"
+        className="grid grid-cols-2 gap-3"
       >
         {[
           { v: "individual", ar: "مستخدم فردي", en: "Individual" },
@@ -601,8 +601,8 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
     <div className="space-y-3">
       <Label className="text-gray-600 text-sm">{t("نوع الطلب", "Request type")} <Star /></Label>
       <div className="relative">
-        <Select value={data.requestType} onValueChange={(v) => update("requestType", v)}>
-          <SelectTrigger className={`${errCls(!!errors.requestType)} ps-10`}>
+        <Select dir="rtl" value={data.requestType} onValueChange={(v) => update("requestType", v)}>
+          <SelectTrigger dir="rtl" className={`${errCls(!!errors.requestType)} ps-10`}>
             <SelectValue placeholder={t("اختر نوع الطلب", "Select request type")} />
           </SelectTrigger>
           <SelectContent>
@@ -616,18 +616,23 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
       <ErrMsg m={errors.requestType} />
     </div>
 
-    <div dir="rtl" className="grid md:grid-cols-2 gap-4">
+    <div className="grid md:grid-cols-2 gap-4">
       {data.userType === "individual" ? (
         <>
+          <div>
+            <Label className="text-gray-600 text-sm">{t("الاسم الكامل بالإنجليزية", "Full name (English)")} <Star /></Label>
+            <Input dir="ltr" value={data.fullNameEn} onChange={(e) => update("fullNameEn", e.target.value)} maxLength={100} className={errCls(!!errors.fullNameEn)} />
+            <ErrMsg m={errors.fullNameEn} />
+          </div>
           <div>
             <Label className="text-gray-600 text-sm">{t("الاسم الكامل بالعربية", "Full name (Arabic)")} <Star /></Label>
             <Input dir="rtl" value={data.fullNameAr} onChange={(e) => update("fullNameAr", e.target.value)} maxLength={100} className={errCls(!!errors.fullNameAr)} />
             <ErrMsg m={errors.fullNameAr} />
           </div>
           <div>
-            <Label className="text-gray-600 text-sm">{t("الاسم الكامل بالإنجليزية", "Full name (English)")} <Star /></Label>
-            <Input dir="ltr" value={data.fullNameEn} onChange={(e) => update("fullNameEn", e.target.value)} maxLength={100} className={errCls(!!errors.fullNameEn)} />
-            <ErrMsg m={errors.fullNameEn} />
+            <Label className="text-gray-600 text-sm">{t("رقم جواز السفر", "Passport number")} <Star /></Label>
+            <Input dir="ltr" value={data.passportNo} onChange={(e) => update("passportNo", e.target.value.toUpperCase().slice(0, 20))} className={errCls(!!errors.passportNo)} />
+            <ErrMsg m={errors.passportNo} />
           </div>
           <div>
             <Label className="text-gray-600 text-sm">{t("الرقم الشخصي (الهوية القطرية)", "Qatar ID")} <Star /></Label>
@@ -648,11 +653,6 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
             />
             <ErrMsg m={errors.qatarId} />
           </div>
-          <div>
-            <Label className="text-gray-600 text-sm">{t("رقم جواز السفر", "Passport number")} <Star /></Label>
-            <Input dir="ltr" value={data.passportNo} onChange={(e) => update("passportNo", e.target.value.toUpperCase().slice(0, 20))} className={errCls(!!errors.passportNo)} />
-            <ErrMsg m={errors.passportNo} />
-          </div>
           {!serviceContext.isSehhaty && (
             <div>
               <Label className="text-gray-600 text-sm">{t("رقم التأشيرة (اختياري)", "Visa number (optional)")}</Label>
@@ -662,8 +662,8 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
           )}
           <div>
             <Label className="text-gray-600 text-sm">{t("الجنسية", "Nationality")} <Star /></Label>
-            <Select value={data.nationality} onValueChange={(v) => update("nationality", v)}>
-              <SelectTrigger className={errCls(!!errors.nationality)}>
+            <Select dir="rtl" value={data.nationality} onValueChange={(v) => update("nationality", v)}>
+              <SelectTrigger dir="rtl" className={errCls(!!errors.nationality)}>
                 <SelectValue placeholder={t("اختر الجنسية", "Select nationality")} />
               </SelectTrigger>
               <SelectContent>
@@ -749,8 +749,8 @@ const Step1 = ({ data, update, errors, t, dir, serviceContext, requestTypes }: S
           </div>
           <div>
             <Label className="text-gray-600 text-sm">{t("نوع النشاط", "Activity type")} <Star /></Label>
-            <Select value={data.activityType} onValueChange={(v) => update("activityType", v)}>
-              <SelectTrigger className={errCls(!!errors.activityType)}>
+            <Select dir="rtl" value={data.activityType} onValueChange={(v) => update("activityType", v)}>
+              <SelectTrigger dir="rtl" className={errCls(!!errors.activityType)}>
                 <SelectValue placeholder={t("اختر نوع النشاط", "Select activity")} />
               </SelectTrigger>
               <SelectContent>
@@ -813,7 +813,7 @@ const Step2 = ({ data, update, errors, t, serviceContext }: StepProps) => (
             `We use this data to send ${serviceContext.platformShortEn} notifications for the requested service. The phone number must be registered under your name.`
           )}
     />
-    <div dir="rtl" className="grid md:grid-cols-2 gap-4">
+    <div className="grid md:grid-cols-2 gap-4">
       <div className="md:col-span-2">
         <Label className="text-gray-600 text-sm">
           {data.userType === "company"
@@ -838,8 +838,8 @@ const Step2 = ({ data, update, errors, t, serviceContext }: StepProps) => (
       <div>
         <Label className="text-gray-600 text-sm">{t("مشغل الشبكة", "Network operator")} <Star /></Label>
         <div className="relative">
-          <Select value={data.networkOperator} onValueChange={(v) => update("networkOperator", v)}>
-            <SelectTrigger className={`${errCls(!!errors.networkOperator)} ps-10`}>
+          <Select dir="rtl" value={data.networkOperator} onValueChange={(v) => update("networkOperator", v)}>
+            <SelectTrigger dir="rtl" className={`${errCls(!!errors.networkOperator)} ps-10`}>
               <SelectValue placeholder={t("اختر مشغل الشبكة", "Select operator")} />
             </SelectTrigger>
             <SelectContent>
@@ -863,11 +863,11 @@ const Step2 = ({ data, update, errors, t, serviceContext }: StepProps) => (
             : t("عنوان الإقامة في قطر", "Address in Qatar")}
         </span>
       </div>
-      <div dir="rtl" className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
         <div>
           <Label className="text-gray-600 text-sm">{t("البلدية", "Municipality")} <Star /></Label>
-          <Select value={data.governorate} onValueChange={(v) => update("governorate", v)}>
-            <SelectTrigger className={errCls(!!errors.governorate)}>
+          <Select dir="rtl" value={data.governorate} onValueChange={(v) => update("governorate", v)}>
+            <SelectTrigger dir="rtl" className={errCls(!!errors.governorate)}>
               <SelectValue placeholder={t("اختر البلدية", "Select")} />
             </SelectTrigger>
             <SelectContent>
@@ -929,7 +929,7 @@ function Step3({ data, update, errors, t, serviceContext }: StepProps) {
                 : "Choose the exam purpose and create strong credentials. You will need them later to follow up your requests."
             )}
       />
-      <div dir="rtl" className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
         {data.userType === "individual" && !serviceContext.isSehhaty && (
           <>
             <div>
@@ -938,8 +938,8 @@ function Step3({ data, update, errors, t, serviceContext }: StepProps) {
             </div>
             <div>
               <Label className="text-gray-600 text-sm">{t("المهنة", "Occupation")} <Star /></Label>
-              <Select value={data.occupation} onValueChange={(v) => update("occupation", v)}>
-                <SelectTrigger className={errCls(!!errors.occupation)}>
+              <Select dir="rtl" value={data.occupation} onValueChange={(v) => update("occupation", v)}>
+                <SelectTrigger dir="rtl" className={errCls(!!errors.occupation)}>
                   <SelectValue placeholder={t("اختر المهنة", "Select occupation")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -962,7 +962,7 @@ function Step3({ data, update, errors, t, serviceContext }: StepProps) {
             value={data.userType === "company" ? data.purposeCompany : data.purpose}
             onValueChange={(v) => update(data.userType === "company" ? "purposeCompany" : "purpose", v)}
           >
-            <SelectTrigger className={errCls(!!(data.userType === "company" ? errors.purposeCompany : errors.purpose))}>
+            <SelectTrigger dir="rtl" className={errCls(!!(data.userType === "company" ? errors.purposeCompany : errors.purpose))}>
               <SelectValue placeholder={t("اختر الغرض", "Select purpose")} />
             </SelectTrigger>
             <SelectContent>
@@ -983,7 +983,7 @@ function Step3({ data, update, errors, t, serviceContext }: StepProps) {
           <Lock className="w-4 h-4" style={{ color: MAROON }} />
           <span className="text-sm font-semibold text-gray-700">{t("بيانات الدخول", "Login credentials")}</span>
         </div>
-        <div dir="rtl" className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <Label className="text-gray-600 text-sm">{t("اسم المستخدم", "Username")} <Star /></Label>
             <Input dir="ltr" value={data.username} onChange={(e) => update("username", e.target.value.replace(/[^A-Za-z0-9_.]/g, ""))} maxLength={30} className={errCls(!!errors.username)} />

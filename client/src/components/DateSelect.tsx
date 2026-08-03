@@ -80,13 +80,13 @@ const DateSelect = ({
   const trigger = `h-11 rounded-md text-base bg-white ${hasError ? "border-red-400" : "border-gray-300"}`;
 
   return (
-    <div className="grid grid-cols-3 gap-2" dir="ltr">
+    <div className="grid grid-cols-3 gap-2" dir="rtl">
       {/* Day */}
       <Select
         value={d}
         onValueChange={(v) => emit(y, m, v)}
       >
-        <SelectTrigger className={trigger}>
+        <SelectTrigger dir="rtl" className={trigger}>
           <SelectValue placeholder={t("اليوم", "Day")} />
         </SelectTrigger>
         <SelectContent className="max-h-64">
@@ -100,7 +100,7 @@ const DateSelect = ({
         value={m}
         onValueChange={(v) => emit(y, v, d)}
       >
-        <SelectTrigger className={trigger}>
+        <SelectTrigger dir="rtl" className={trigger}>
           <SelectValue placeholder={t("الشهر", "Month")} />
         </SelectTrigger>
         <SelectContent className="max-h-64">
@@ -116,7 +116,7 @@ const DateSelect = ({
         value={y}
         onValueChange={(v) => emit(v, m, d)}
       >
-        <SelectTrigger className={trigger}>
+        <SelectTrigger dir="rtl" className={trigger}>
           <SelectValue placeholder={t("السنة", "Year")} />
         </SelectTrigger>
         <SelectContent className="max-h-64">
