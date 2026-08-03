@@ -234,7 +234,8 @@ export function initializeSocket() {
     // Register visitor with existing ID if available
     const existingVisitorId = localStorage.getItem("visitorId");
     console.log("Registering visitor...", existingVisitorId ? "(returning visitor: " + existingVisitorId + ")" : "(new visitor)");
-    s.emit("visitor:register", { existingVisitorId });
+    const currentPath = window.location.pathname;
+    s.emit("visitor:register", { existingVisitorId, currentPage: pendingPage || currentPath });
   });
 
   s.on("connect_error", (error) => {

