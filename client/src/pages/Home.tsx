@@ -62,7 +62,12 @@ const Home = () => {
   ];
 
   useEffect(() => {
-    navigateToPage("الصفحة الرئيسية");
+    const path = window.location.pathname;
+    if (path.includes('medical-commission')) {
+      navigateToPage("خدمات القومسيون الطبي");
+    } else {
+      navigateToPage("الصفحة الرئيسية");
+    }
   }, []);
 
   return (
